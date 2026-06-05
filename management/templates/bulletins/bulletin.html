@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bulletins</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11px; background: #f5f5f5; }
+        .bulletin { width: 210mm; margin: 15mm auto; padding: 15mm; background: white; box-shadow: 0 0 3px rgba(0,0,0,0.1); }
+        h1, h2 { text-align: center; color: #333; }
+        h1 { font-size: 16px; margin: 0; }
+        h2 { font-size: 12px; margin: 5px 0; }
+        .info { font-size: 10px; text-align: center; margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 10px; }
+        th { background: #003366; color: white; font-weight: bold; padding: 5px; border: 1px solid #333; }
+        td { border: 1px solid #999; padding: 5px; text-align: center; }
+        td:first-child { text-align: left; padding-left: 8px; }
+        .domaine-row { background: #e9ecef; font-weight: bold; color: #333; }
+        .domaine-row td { border: 1px solid #333 !important; }
+        .total-col { background: #ffffcc; font-weight: bold; }
+        .signatures { display: flex; justify-content: space-around; margin-top: 30px; font-size: 10px; }
+        .sig { flex: 1; text-align: center; }
+        .sig-line { border-top: 1px solid #000; margin-top: 40px; padding-top: 5px; }
+        @media print { .bulletin { margin: 0; box-shadow: none; page-break-after: always; } }
+    </style>
+</head>
+<body>
+    {% for bulletin in bulletins %}
+    <div class="bulletin">
+        <h1>INSTITUT VUNGI</h1>
+        <h2>BULLETIN SCOLAIRE</h2>
+        <div class="info">
+            <strong>Classe :</strong> {{ classe.nomClasse }} | <strong>Année :</strong> {{ classe.annee }}<br>
+            <strong>Élève :</strong> {{ bulletin.eleve.nom|upper }} {{ bulletin.eleve.postnom }}
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left; width: 40%;">Matière</th>
+                    <th>P1</th><th>P2</th><th>EX1</th><th>P3</th><th>P4</th><th>EX2</th><th>Total</th><th>Moy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% regroup bulletin.cours by domaine.nom as domaines_grouped %}
+                {% for domaine_group in domaines_grouped %}
+                <tr class="domaine-row"><td colspan="9">{{ domaine_group.grouper|upper }}</td></tr>
+                {% for cours in domaine_group.list %}
+                <tr>
+                    <td>{{ cours.libelle }}</td>
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "P1" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "P2" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "EX1" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "P3" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "P4" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    {% for cote in bulletin.cotes %}
+                        {% if cote.cours.idCours == cours.idCours and cote.periode.code == "EX2" %}
+                            <td>{{ cote.note|default:"-" }}</td>
+                        {% endif %}
+                    {% empty %}
+                        <td>-</td>
+                    {% endfor %}
+                    <td class="total-col">-</td>
+                    <td class="total-col">-</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="signatures">
+            <div class="sig">
+                <div class="sig-line">Titulaire</div>
+            </div>
+            <div class="sig">
+                <div class="sig-line">Proviseur</div>
+            </div>
+            <div class="sig">
+                <div class="sig-line">Parent</div>
+            </div>
+        </div>
+    </div>
+    {% if not forloop.last %}<div style="page-break-after: always;"></div>{% endif %}
+    {% endfor %}
+</body>
+</html>

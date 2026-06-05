@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Comptable | Institut Vungi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <style>
+        :root { --uac-blue: #003366; --uac-gold: #FFCC00; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        .sidebar { background: var(--uac-blue); height: 100vh; color: white; position: fixed; left: 0; top: 0; z-index: 1000; display: flex; flex-direction: column; padding: 20px 0; }
+        @media (min-width: 768px) { .sidebar { width: 240px; } .main-content { margin-left: 240px; } .sidebar .nav-link { text-align: left; padding: 12px 20px; display: block; } .sidebar .nav-link i { margin-right: 10px; width: 25px; } }
+        @media (max-width: 767px) { .sidebar { width: 85px; } .main-content { margin-left: 85px; } .sidebar .nav-link { display: flex; flex-direction: column; align-items: center; padding: 10px 2px; font-size: 0.65rem; } .sidebar h6, .sidebar hr { display: none; } }
+        .nav-pills .nav-link { color: rgba(255,255,255,0.7); margin: 5px 8px; border-radius: 10px; text-decoration: none; }
+        .nav-pills .nav-link.active { background-color: var(--uac-gold) !important; color: var(--uac-blue) !important; font-weight: bold; }
+        .main-content { padding: 25px; }
+        .portal-card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .text-uac { color: var(--uac-blue); }
+        .btn-uac { background-color: var(--uac-blue); color: white; font-weight: bold; }
+        .btn-uac:hover { background-color: #002244; color: white; }
+        .select2-container--default .select2-selection--single { border: 1px solid #003366 !important; height: 40px !important; padding: 6px !important; border-radius: 6px !important; }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="text-center mb-4 px-2">
+        <i class="fas fa-user-tie fa-2x text-warning"></i>
+        <h6 class="fw-bold text-uppercase mt-2 small">Gestion Comptable</h6>
+        <hr class="mx-3 opacity-25">
+    </div>
+    <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="pill" href="#pane-saisie"><i class="fas fa-plus-circle"></i> <span>Nouveau Versement</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#pane-config-frais"><i class="fas fa-cogs"></i> <span>Configuration Tarifs</span></a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#pane-historique"><i class="fas fa-list-ul"></i> <span>Historique Global</span></a>
+        </li>
+        
+        <li class="nav-item mt-auto mb-3 px-3">
+            <hr class="opacity-25 text-white">
+            <form action="{% url 'logout' %}" method="POST" class="d-inline w-100">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link nav-link text-warning fw-bold p-0 border-0 align-baseline" style="text-decoration: none; background: none;">
+                    <i class="fas fa-sign-out-alt"></i> <span>Déconnexion</span>
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<main class="main-content">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>{{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="tab-content" id="v-pills-tabContent">
+        
+        <div class="tab-pane fade show active" id="pane-saisie" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="portal-card">
+                        <h4 class="fw-bold text-uac mb-4 text-center"><i class="fas fa-file-invoice-dollar me-2"></i>PERCEPTION DES FRAIS</h4>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="enregistrer_paiement" value="1">
+                            
+                            <div class="mb-3">
+                                <label class="small fw-bold text-uac">ÉLÈVE CONCERNÉ</label>
+                                <select name="matricule" id="rechercheEleve" class="form-select" required>
+                                    <option value="" selected disabled>Rechercher par nom ou matricule...</option>
+                                    {% for e in eleves %}
+                                        <option value="{{ e.matriculeEleve }}"
+                                                data-classe="{{ e.classe.nomClasse }}"
+                                                data-option="{{ e.classe.option.nomOption }}"
+                                                data-nom="{{ e.nom }}"
+                                                data-postnom="{{ e.postnom }}"
+                                                data-prenom="{{ e.prenom }}">
+                                            {{ e.matriculeEleve }} — {{ e.nom }} {{ e.postnom }} {{ e.prenom }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Tapez le nom, le postnom ou le matricule pour filtrer la liste.</small>
+                            </div>
+
+                            <div id="infoCibleEleve" class="alert alert-info py-2 d-none">
+                                <small><strong>Classe de l'élève :</strong> <span id="txtClasse"></span> | <strong>Option :</strong> <span id="txtOption"></span></small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="small fw-bold text-uac">CATÉGORIE DE FRAIS (Montant fixé)</label>
+                                <select name="frais_id" id="selectFrais" class="form-select" required>
+                                    <option value="" selected disabled>Sélectionner le type de frais...</option>
+                                    {% for f in frais_liste %}
+                                        <option value="{{ f.id }}">
+                                            {{ f.typeFrs }} -> {{ f.montant }} $ {% if f.classe or f.option %}(Cible: {{ f.classe|default:"Toutes" }} - {{ f.option|default:"Général" }}){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="small fw-bold text-uac">NUMÉRO DU REÇU (numRecur)</label>
+                                    <input type="text" name="numRecur" class="form-control" placeholder="Ex: REC-2026-001" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="small fw-bold text-uac">MONTANT À ENCAISSER ($)</label>
+                                    <input type="number" name="montant" class="form-control text-success fw-bold" placeholder="0.00" step="0.01" required>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-uac w-100 py-3 mt-2 shadow"><i class="fas fa-check-circle me-2"></i> ENREGISTRER LE VERSEMENT</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="pane-config-frais" role="tabpanel">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="portal-card">
+                        <h5 class="fw-bold text-uac mb-4"><i class="fas fa-plus-square me-2"></i>FIXER UN MONTANT DU</h5>
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="configurer_frais" value="1">
+                            <div class="mb-3">
+                                <label class="small fw-bold">Libellé du Frais</label>
+                                <input type="text" name="typeFrs" class="form-control" placeholder="Ex: Minerval Premier Trimestre" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Montant Total Exigé ($)</label>
+                                <input type="number" name="montant_du" class="form-control" placeholder="0.00" step="0.01" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Classe Concernée (Optionnel)</label>
+                                <select name="classe" class="form-select">
+                                    <option value="">Toutes les classes (Global)</option>
+                                    {% for c in classes_existantes %}
+                                        <option value="{{ c.nomClasse }}">{{ c.nomClasse }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="small fw-bold">Option Concernée (Optionnel)</label>
+                                <select name="option" class="form-select">
+                                    <option value="">Toutes les options (Global)</option>
+                                    {% for o in options_existantes %}
+                                        <option value="{{ o.nomOption }}">{{ o.nomOption }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-2">AJOUTER AU CATALOGUE</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-md-7">
+                    <div class="portal-card">
+                        <h5 class="fw-bold text-uac mb-4"><i class="fas fa-table me-2"></i>GRILLE TARIFAIRE CONFIGURÉE</h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Type de Frais</th>
+                                        <th>Classe</th>
+                                        <th>Option</th>
+                                        <th class="text-end">Montant Dû</th>
+                                        <th class="text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for f in frais_liste %}
+                                    <tr>
+                                        <td>{{ f.typeFrs }}</td>
+                                        <td><span class="badge bg-secondary">{{ f.classe|default:"Toutes" }}</span></td>
+                                        <td><span class="badge bg-info text-dark">{{ f.option|default:"Toutes" }}</span></td>
+                                        <td class="text-end fw-bold text-primary">{{ f.montant }} $</td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-warning btn-sm btn-modifier-frais" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#modalModifierFrais"
+                                                    data-id="{{ f.id }}"
+                                                    data-type="{{ f.typeFrs }}"
+                                                    data-montant="{{ f.montant }}"
+                                                    data-classe="{{ f.classe|default:'' }}"
+                                                    data-option="{{ f.option|default:'' }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted py-3">Aucun tarif configuré.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="pane-historique" role="tabpanel">
+            <div class="portal-card">
+                <h4 class="fw-bold text-uac mb-4"><i class="fas fa-history me-2"></i>JOURNAL DES ENCAISSEMENTS</h4>
+
+                <form method="GET" action="{% url 'espace_comptable' %}" class="mb-4" id="formRechercheHistorique">
+                    <input type="hidden" name="tab" value="historique">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white"><i class="fas fa-search text-uac"></i></span>
+                        <input type="text"
+                               name="recherche_paiement"
+                               id="rechercheHistorique"
+                               class="form-control"
+                               placeholder="Rechercher par nom, matricule ou numéro de reçu..."
+                               value="{{ recherche_paiement|default:'' }}"
+                               autocomplete="off">
+                        <button type="submit" class="btn btn-uac">Rechercher</button>
+                        {% if recherche_paiement %}
+                        <a href="{% url 'espace_comptable' %}#pane-historique" class="btn btn-outline-secondary">Effacer</a>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted d-block mt-1">Filtrage instantané ou recherche serveur par nom, matricule, reçu.</small>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tableHistorique">
+                        <thead class="table-light">
+                            <tr><th>Date</th><th>Reçu N°</th><th>Élève</th><th>Frais Associé</th><th class="text-end">Montant Versé</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for p in paiements %}
+                            <tr data-search="{{ p.date|date:'d/m/Y' }} {{ p.numRecur }} {{ p.eleve.nom }} {{ p.eleve.postnom }} {{ p.eleve.prenom }} {{ p.eleve.matriculeEleve }} {{ p.frais_type.typeFrs }} {{ p.montant }}">
+                                <td>{{ p.date|date:"d/m/Y" }}</td>
+                                <td class="fw-bold text-secondary">{{ p.numRecur }}</td>
+                                <td><strong>{{ p.eleve.nom }} {{ p.eleve.postnom }} {{ p.eleve.prenom }}</strong> <small class="text-muted">({{ p.eleve.matriculeEleve }} — {{ p.eleve.classe }})</small></td>
+                                <td>{{ p.frais_type.typeFrs }}</td>
+                                <td class="text-end fw-bold text-success">{{ p.montant }} $</td>
+                            </tr>
+                            {% empty %}
+                            <tr id="historiqueVide">
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    {% if recherche_paiement %}
+                                        Aucun versement trouvé pour « {{ recherche_paiement }} ».
+                                    {% else %}
+                                        Aucun versement enregistré.
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr id="historiqueAucunResultat" style="display: none;">
+                                <td colspan="5" class="text-center text-muted py-4">Aucun versement ne correspond à votre recherche.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<div class="modal fade" id="modalModifierFrais" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Modifier le Tarif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="close"></button>
+            </div>
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="modifier_frais" value="1">
+                <input type="hidden" name="frais_id" id="mod_frais_id">
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="small fw-bold">Libellé du Frais</label>
+                        <input type="text" name="typeFrs" id="mod_typeFrs" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Montant Exigé ($)</label>
+                        <input type="number" name="montant_du" id="mod_montant" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Classe Concernée</label>
+                        <select name="classe" id="mod_classe" class="form-select">
+                            <option value="">Toutes les classes (Global)</option>
+                            {% for c in classes_existantes %}
+                                <option value="{{ c.nomClasse }}">{{ c.nomClasse }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small fw-bold">Option Concernée</label>
+                        <select name="option" id="mod_option" class="form-select">
+                            <option value="">Toutes les options (Global)</option>
+                            {% for o in options_existantes %}
+                                <option value="{{ o.nomOption }}">{{ o.nomOption }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="close">Annuler</button>
+                    <button type="submit" class="btn btn-warning fw-bold">Enregistrer les modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function normalizeSearch(value) {
+        return (value || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function matcherEleve(params, data) {
+        if ($.trim(params.term) === '') {
+            return data;
+        }
+        if (typeof data.text === 'undefined') {
+            return null;
+        }
+        var term = normalizeSearch(params.term);
+        var text = normalizeSearch(data.text);
+        var el = data.element ? $(data.element) : null;
+        var matricule = el ? normalizeSearch(el.val()) : '';
+        var nom = el ? normalizeSearch(el.data('nom')) : '';
+        var postnom = el ? normalizeSearch(el.data('postnom')) : '';
+        var prenom = el ? normalizeSearch(el.data('prenom')) : '';
+        var fullName = (nom + ' ' + postnom + ' ' + prenom).trim();
+
+        if (text.indexOf(term) > -1 || matricule.indexOf(term) > -1 || fullName.indexOf(term) > -1) {
+            return data;
+        }
+        return null;
+    }
+
+    $(document).ready(function() {
+        // 1. Select2 avec recherche par nom ou matricule
+        $('#rechercheEleve').select2({
+            placeholder: "Rechercher par nom ou matricule...",
+            allowClear: true,
+            width: '100%',
+            matcher: matcherEleve
+        });
+
+        // 2. Détection dynamique classe/option élève
+        $('#rechercheEleve').on('change', function() {
+            var selectedOption = $(this).find('option:selected');
+            var classe = selectedOption.data('classe');
+            var option = selectedOption.data('option');
+
+            if(classe) {
+                $('#txtClasse').text(classe);
+                $('#txtOption').text(option ? option : "Générale/Aucune");
+                $('#infoCibleEleve').removeClass('d-none');
+            } else {
+                $('#infoCibleEleve').addClass('d-none');
+            }
+        });
+
+        // 3. Filtrage instantané de l'historique des paiements
+        $('#rechercheHistorique').on('input', function() {
+            var term = normalizeSearch($(this).val());
+            var visibleCount = 0;
+            $('#tableHistorique tbody tr[data-search]').each(function() {
+                var rowText = normalizeSearch($(this).data('search'));
+                var match = term === '' || rowText.indexOf(term) > -1;
+                $(this).toggle(match);
+                if (match) visibleCount++;
+            });
+            $('#historiqueAucunResultat').toggle(term !== '' && visibleCount === 0);
+        });
+
+        // 4. Ouvrir l'onglet historique si recherche ou paramètre tab
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'historique' || urlParams.get('recherche_paiement')) {
+            var historiqueTab = document.querySelector('[href="#pane-historique"]');
+            if (historiqueTab) {
+                new bootstrap.Tab(historiqueTab).show();
+            }
+        }
+
+        // 5. Capturer l'événement clic pour pré-remplir la Modal de modification
+        $('.btn-modifier-frais').on('click', function() {
+            var id = $(this).data('id');
+            var type = $(this).data('type');
+            var montant = $(this).data('montant');
+            var classe = $(this).data('classe');
+            var option = $(this).data('option');
+
+            $('#mod_frais_id').val(id);
+            $('#mod_typeFrs').val(type);
+            $('#mod_montant').val(montant);
+            $('#mod_classe').val(classe).change();
+            $('#mod_option').val(option).change();
+        });
+    });
+</script>
+</body>
+</html>

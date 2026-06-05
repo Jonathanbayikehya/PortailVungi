@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Proviseur - PortailVungi</title>
+    <link class="screen-style" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link class="screen-style" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --uac-blue: #003366;
+            --uac-gold: #FFCC00;
+        }
+        body { 
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        .wrapper {
+            display: flex;
+            align-items: stretch;
+            width: 100%;
+        }
+
+        .sidebar-menu { 
+            background-color: var(--uac-blue);
+            color: white; 
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px 5px;
+            min-height: 100vh;
+            transition: all 0.3s;
+        }
+        
+        @media (min-width: 768px) {
+            .sidebar-menu { width: 240px; }
+            .sidebar-menu .nav-link span { display: inline-block !important; font-size: 0.9rem; margin-top: 5px; }
+        }
+
+        @media (max-width: 767.98px) {
+            .sidebar-menu { width: 75px; padding: 10px 2px; }
+            .sidebar-menu .nav-link span { font-size: 0.65rem; display: block; text-align: center; }
+            .hide-on-mobile { display: none !important; }
+        }
+        
+        .user-profile-box {
+            text-align: center;
+            width: 100%;
+            padding: 12px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .user-profile-box i { font-size: 2.2rem; color: var(--uac-gold); }
+        .user-profile-box span { font-size: 0.85rem; font-weight: 700; display: block; margin-top: 5px; color: #ffffff; text-transform: uppercase; }
+
+        .sidebar-menu .nav { flex-direction: column !important; width: 100%; gap: 8px; }
+        .sidebar-menu .nav-item { width: 100%; padding: 0 5px; }
+        .sidebar-menu .nav-link { 
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px; 
+            text-align: center;
+            padding: 12px 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            border: none;
+            background: transparent;
+        }
+        .sidebar-menu .nav-link i { font-size: 1.3rem; margin-bottom: 3px; }
+        .sidebar-menu .nav-link:hover { color: white; background-color: rgba(255, 255, 255, 0.1); }
+        .sidebar-menu .nav-link.active { color: #003366 !important; background-color: var(--uac-gold) !important; font-weight: bold; }
+        
+        .main-content { flex-grow: 1; min-width: 0; }
+        .text-uac-blue { color: var(--uac-blue) !important; }
+        
+        .stat-card {
+            border: none;
+            border-radius: 12px;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); }
+
+        @media print {
+            .sidebar-menu, .btn, .badge, .alert, .card-header, .nav-tabs, .screen-style { display: none !important; }
+            body { background-color: #fff !important; color: #000 !important; font-size: 11pt; }
+            .wrapper { display: block !important; }
+            .main-content { padding: 0 !important; margin: 0 !important; width: 100% !important; }
+            .card { border: none !important; }
+            .table th { background-color: #f2f2f2 !important; color: #000 !important; border: 1px solid #000 !important; }
+            .table td { border: 1px solid #000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    
+    <div class="sidebar-menu">
+        <div class="logo-vungi text-center mb-2 mt-2" style="color: var(--uac-gold);">
+            <i class="fa-solid fa-shield-halved"></i>
+            <small class="d-block fw-bold hide-on-mobile mt-1" style="font-size: 0.75rem; letter-spacing: 1px;">VUNGI ADMIN</small>
+        </div>
+
+        <div class="user-profile-box mb-4">
+            <i class="fa-solid fa-user-tie"></i>
+            <span class="hide-on-mobile">M. le Proviseur</span>
+            <small class="text-white-50 d-block hide-on-mobile" style="font-size: 0.75rem;">Direction Pédagogique</small>
+        </div>
+        
+        <ul class="nav nav-pills" id="proviseurTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="communique-tab" data-bs-toggle="tab" data-bs-target="#communique-panel" type="button" role="tab">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Vue d'ensemble</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="enseignants-tab" data-bs-toggle="tab" data-bs-target="#enseignants-panel" type="button" role="tab">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                    <span>Enseignant / Corps</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="attribution-tab" data-bs-toggle="tab" data-bs-target="#attribution-panel" type="button" role="tab">
+                    <i class="fa-solid fa-book-bookmark"></i>
+                    <span>Attribuer Cours</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="periode-tab" data-bs-toggle="tab" data-bs-target="#periode-panel" type="button" role="tab">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Période d'Encodage</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="validation-tab" data-bs-toggle="tab" data-bs-target="#validation-panel" type="button" role="tab">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>Centralisations</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deliberation-tab" data-bs-toggle="tab" data-bs-target="#deliberation-panel" type="button" role="tab">
+                    <i class="fa-solid fa-gavel"></i>
+                    <span>Délibération</span>
+                </button>
+            </li>
+        </ul>
+        
+        <div class="mt-auto w-100 px-1">
+            <a href="{% url 'logout' %}" class="nav-link text-danger fw-bold" style="background-color: rgba(220, 53, 69, 0.1);">
+                <i class="fa-solid fa-power-off text-danger"></i>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content px-3 px-md-4 py-4">
+        
+        {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                        <i class="fa-solid {% if message.tags == 'success' %}fa-circle-check text-success{% else %}fa-circle-exclamation text-danger{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-2 mb-4 border-bottom gap-2">
+            <div>
+                <h1 class="h3 text-uac-blue fw-bold m-0"><i class="fa-solid fa-folder-managed me-2"></i>Cabinet du Proviseur</h1>
+                <p class="text-muted small mb-0">Gestion globale, suivi des délibérations et statistiques de l'établissement</p>
+            </div>
+            <div>
+                <button onclick="window.print();" class="btn btn-sm btn-light border fw-bold shadow-sm">
+                    <i class="fa-solid fa-print me-1 text-secondary"></i> Imprimer Rapport
+                </button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="proviseurTabContent">
+            
+            <div class="tab-pane fade show active" id="communique-panel" role="tabpanel">
+                <div class="row g-3 mb-4">
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card bg-white shadow-sm p-3 border-start border-primary border-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="text-muted small text-uppercase">Élèves inscrits</h6>
+                                    <h3 class="fw-bold text-dark m-0">{{ total_eleves|default:"0" }}</h3>
+                                </div>
+                                <i class="fa-solid fa-user-graduate fa-2x text-primary opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card bg-white shadow-sm p-3 border-start border-success border-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="text-muted small text-uppercase">Enseignants</h6>
+                                    <h3 class="fw-bold text-dark m-0">{{ total_enseignants|default:"0" }}</h3>
+                                </div>
+                                <i class="fa-solid fa-users-gear fa-2x text-success opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card bg-white shadow-sm p-3 border-start border-warning border-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="text-muted small text-uppercase">Classes actives</h6>
+                                    <h3 class="fw-bold text-dark m-0">{{ total_classes|default:"0" }}</h3>
+                                </div>
+                                <i class="fa-solid fa-door-closed fa-2x text-warning opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6 col-lg-3">
+                        <div class="card stat-card bg-white shadow-sm p-3 border-start border-danger border-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6 class="text-muted small text-uppercase">Options</h6>
+                                    <h3 class="fw-bold text-dark m-0">{{ total_options|default:"0" }}</h3>
+                                </div>
+                                <i class="fa-solid fa-tags fa-2x text-danger opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0 fw-bold text-uac-blue"><i class="fa-solid fa-clock-rotate-left me-2"></i>Activités Récentes de l'Établissement</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted text-center py-4">Bienvenue dans votre nouvel espace. Les fiches d'attributions et journaux d'encodages s'afficheront ici au fur et à mesure.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="enseignants-panel" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="card-title mb-0 text-uac-blue fw-bold"><i class="fa-solid fa-address-book me-2"></i>Fichier Personnel Enseignant</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Nom Complet</th>
+                                    <th>Téléphone / Contact</th>
+                                    <th class="text-center">Assignation Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enseignant in liste_enseignants_global %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td class="fw-bold text-uppercase">{{ enseignant.nom }} {{ enseignant.postnom }}</td>
+                                    <td>{{ enseignant.telephone|default:"Non renseigné" }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success rounded-pill px-3">Actif</span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-4">Aucun enseignant enregistré pour le moment.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="attribution-panel" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div>
+                            <h5 class="card-title mb-0 text-uac-blue fw-bold">
+                                <i class="fa-solid fa-rectangle-list me-2"></i>Attribution de cours aux enseignants
+                            </h5>
+                            <p class="text-muted small mb-0">Sélectionnez ou recherchez une classe pour distribuer les cours et affecter le personnel.</p>
+                        </div>
+                        
+                        <form method="GET" action="" class="d-flex align-items-center gap-2" style="min-width: 320px;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light text-muted fw-bold">Classe :</span>
+                                <select name="classe_id" class="form-select form-select-sm fw-bold border-secondary-subtle" onchange="this.form.submit()">
+                                    {% for cl in liste_classes_global %}
+                                        <option value="{{ cl.pk }}" {% if classe_selectionnee.pk == cl.pk %}selected{% endif %}>
+                                            {{ cl }}
+                                        </option>
+                                    {% empty %}
+                                        <option value="" disabled>Aucune classe disponible</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card-body p-0">
+                        {% if classe_selectionnee %}
+                            <div class="bg-light px-4 py-3 border-bottom d-flex justify-content-between align-items-center">
+                                <span class="fs-6 fw-bold text-dark">
+                                    <i class="fa-solid fa-folder-open me-2 text-uac-blue"></i>
+                                    Classe sélectionnée : <span class="text-uac-blue">{{ classe_selectionnee }}</span>
+                                </span>
+                                <span class="badge bg-primary rounded-pill fw-bold px-3 py-2">
+                                    {{ cours_de_la_classe|length }} Cours répertoriés
+                                </span>
+                            </div>
+
+                           <!-- DÉBUT TABLEAU D'ATTRIBUTION COMPLET -->
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">N°</th>
+                                            <th>Code</th>
+                                            <th>Nom du Cours</th>
+                                            <th>Enseignant Actuel</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cours in cours_de_la_classe %}
+                                        <tr>
+                                            <td class="ps-4">{{ forloop.counter }}</td>
+                                            <td><span class="badge bg-secondary-subtle text-dark">{{ cours.idCours }}</span></td>
+                                            <td class="fw-bold text-uac-blue">{{ cours }}</td>
+                                            <td>
+                                                {{ cours.enseignant_actuel.nom|default:"Non attribué" }}
+                                            </td>
+                                            <td>
+                                                <form method="POST" action="{% url 'dashboard_proviseur' %}?classe_id={{ classe_selectionnee.pk }}#attribution-panel" class="d-flex gap-2">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="cours_id" value="{{ cours.idCours }}">
+                                                    <input type="hidden" name="classe_id" value="{{ classe_selectionnee.pk }}">
+                                                    
+                                                    <select name="enseignant_id" class="form-select form-select-sm">
+                                                        <option value="retirer" {% if not cours.enseignant_actuel %}selected{% endif %}>
+                                                            -- Non attribué --
+                                                        </option>
+                                                        
+                                                        {% for ens in liste_enseignants_global %}
+                                                            <option value="{{ ens.idEns }}" 
+                                                                {% if cours.enseignant_actuel and cours.enseignant_actuel.idEns == ens.idEns %}selected{% endif %}>
+                                                                
+                                                                {# Affichage du nom complet ici #}
+                                                                {{ ens.nom|default:"Sans nom" }} {{ ens.postnom|default:"" }}
+                                                                
+                                                            </option>
+                                                        {% endfor %}
+                                                    </select>
+                                                    <button type="submit" name="attribuer_cours" class="btn btn-sm btn-primary"><i class="fa-solid fa-save"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr><td colspan="5" class="text-center py-4 text-muted">Aucun cours trouvé pour cette classe.</td></tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- FIN TABLEAU D'ATTRIBUTION COMPLET -->
+                        {% else %}
+                            <div class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-circle-exclamation display-6 mb-2 text-warning"></i><br>
+                                Veuillez d'abord enregistrer des classes dans le système pour gérer les attributions.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="periode-panel" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="card-title mb-0 text-uac-blue fw-bold"><i class="fa-solid fa-calendar-check me-2"></i>Contrôle de la Période d'Encodage des Cotes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            {% for p in periodes %}
+                            <div class="col-md-6 col-lg-3">
+                                <div class="card border p-3 text-center bg-light shadow-sm">
+                                    <h6 class="fw-bold mb-1">{{ p.nomPeriode }}</h6>
+                                    <small class="text-muted d-block mb-3">ID : {{ p.idPeriode }}</small>
+                                    
+                                    <div class="mb-3">
+                                        {% if p.statut == 'ACTIVE' %}
+                                            <span class="badge bg-success px-3 py-2 rounded-pill"><i class="fa-solid fa-lock-open me-1"></i> OUVERTE</span>
+                                        {% else %}
+                                            <span class="badge bg-danger px-3 py-2 rounded-pill"><i class="fa-solid fa-lock me-1"></i> VERROUILLÉE</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <form method="POST" action="">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="periode_id" value="{{ p.idPeriode }}">
+                                        {% if p.statut == 'ACTIVE' %}
+                                            <input type="hidden" name="statut" value="CLOTURE">
+                                            <button type="submit" name="action_periode" class="btn btn-sm btn-danger w-100 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-circle-stop me-1"></i> Bloquer l'encodage
+                                            </button>
+                                        {% else %}
+                                            <input type="hidden" name="statut" value="ACTIVE">
+                                            <button type="submit" name="action_periode" class="btn btn-sm btn-success w-100 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-bolt me-1"></i> Ouvrir la période
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="validation-panel" role="tabpanel">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h5 class="card-title mb-0 text-uac-blue fw-bold">
+                            <i class="fa-solid fa-stamp me-2"></i>Fiches d'encodage reçues en attente de visa
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Classe</th>
+                                        <th>Titulaire Responsable</th>
+                                        <th>Date d'envoi</th>
+                                        <th class="text-center">Statut</th>
+                                        <th class="text-center">Action Administrative</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in fiches_avec_suivi %}
+                                    {% with fiche=item.fiche suivi=item.suivi %}
+                                    <tr>
+                                        <td><span class="badge bg-primary fs-6">{{ fiche.classe }}</span></td>
+                                        <td class="text-uppercase fw-bold">{{ fiche.titulaire.nom }} {{ fiche.titulaire.postnom }}</td>
+                                        <td class="text-muted small">{{ fiche.date_soumission|date:"d/m/Y à H:i" }}</td>
+                                        <td class="text-center">
+                                            {% if fiche.est_valide %}
+                                                <span class="badge bg-success rounded-pill px-3 py-1.5"><i class="fa-solid fa-circle-check me-1"></i> Validé</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1.5"><i class="fa-solid fa-hourglass-half me-1"></i> En attente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if not fiche.est_valide %}
+                                                <button type="button" class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalFiche{{ fiche.pk }}">
+                                                    <i class="fa-solid fa-search me-1"></i> Vérifier
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-light border text-muted fw-bold px-3" disabled><i class="fa-solid fa-lock me-1"></i> Clôturé</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-5">
+                                            <i class="fa-solid fa-circle-nodes display-6 d-block mb-2 text-secondary"></i>
+                                            <strong>Aucune soumission en cours.</strong><br>
+                                            En attente de la centralisation des fiches de cotes par les enseignants titulaires.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modals vérification centralisation -->
+            {% for item in fiches_avec_suivi %}
+            {% with fiche=item.fiche suivi=item.suivi %}
+            <div class="modal fade" id="modalFiche{{ fiche.pk }}" tabindex="-1">
+                <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header bg-uac-blue text-white" style="background:var(--uac-blue)!important;">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-clipboard-check me-2 text-warning"></i>Suivi de la classe {{ fiche.classe.nomClasse }}</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4"><div class="p-3 bg-light rounded"><small class="text-muted">Titulaire</small><br><strong>{{ fiche.titulaire.nom }} {{ fiche.titulaire.postnom }}</strong></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-light rounded"><small class="text-muted">Soumis le</small><br><strong>{{ fiche.date_soumission|date:"d/m/Y à H:i" }}</strong></div></div>
+                                <div class="col-md-4"><div class="p-3 bg-light rounded"><small class="text-muted">Cours programmés</small><br><strong>{{ suivi.nombre_total_cours }}</strong></div></div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Élève</th>
+                                            <th class="text-center">Dû ($)</th>
+                                            <th class="text-center">Payé ($)</th>
+                                            <th class="text-center">Reste ($)</th>
+                                            <th class="text-center">Cotes</th>
+                                            <th class="text-center">Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for s in suivi.suivi_eleves %}
+                                        <tr>
+                                            <td class="small fw-bold">{{ s.eleve.nom }} {{ s.eleve.postnom }}</td>
+                                            <td class="text-center">{{ s.total_du }}</td>
+                                            <td class="text-center text-success fw-bold">{{ s.total_paye }}</td>
+                                            <td class="text-center {% if s.reste_a_payer > 0 %}text-danger{% endif %}">{{ s.reste_a_payer }}</td>
+                                            <td class="text-center">{{ s.cotes_encodees }}/{{ s.cotes_attendues }}</td>
+                                            <td class="text-center">
+                                                {% if s.est_entierement_cote and s.en_regle %}<span class="badge bg-success">Prêt</span>
+                                                {% else %}<span class="badge bg-warning text-dark">À suivre</span>{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <form method="POST" action="{% url 'valider_fiche_proviseur' fiche.pk %}" class="mt-4 border-top pt-3">
+                                {% csrf_token %}
+                                <label class="form-label fw-bold text-uac-blue">Retour / Feedback au titulaire</label>
+                                <textarea name="feedback_proviseur" class="form-control mb-3" rows="3" placeholder="Observations, corrections demandées, félicitations..."></textarea>
+                                <button type="submit" class="btn btn-success fw-bold"><i class="fa-solid fa-check-double me-2"></i>Valider la centralisation</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+
+            <!-- DÉLIBÉRATION -->
+            <div class="tab-pane fade" id="deliberation-panel" role="tabpanel">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
+                        <div>
+                            <h5 class="card-title mb-0 text-uac-blue fw-bold">
+                                <i class="fa-solid fa-gavel me-2"></i>Délibération du Jury
+                            </h5>
+                            <p class="text-muted small mb-0">Sélectionnez une classe pour analyser les cotes et prendre les décisions finales.</p>
+                        </div>
+                        <form method="GET" action="" class="d-flex align-items-center gap-2">
+                            <input type="hidden" name="classe_id" value="{{ classe_selectionnee.pk|default:'' }}">
+                            <select name="classe_delib" class="form-select form-select-sm fw-bold" onchange="this.form.submit()">
+                                {% for cl in liste_classes_global %}
+                                    <option value="{{ cl.pk }}" {% if classe_delib.pk == cl.pk %}selected{% endif %}>{{ cl }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+
+                    <div class="card-body">
+                        <!-- Publication des résultats -->
+                        <div class="alert {% if publication.est_publiee %}alert-success{% else %}alert-warning{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+                            <div>
+                                <strong><i class="fa-solid fa-bullhorn me-2"></i>Publication des résultats :</strong>
+                                {% if publication.est_publiee %}
+                                    Publiés le {{ publication.date_publication|date:"d/m/Y à H:i" }}
+                                {% else %}
+                                    Les élèves ne peuvent pas encore consulter leurs résultats.
+                                {% endif %}
+                            </div>
+                            <form method="POST" class="d-flex gap-2">
+                                {% csrf_token %}
+                                {% if publication.est_publiee %}
+                                    <button type="submit" name="action_publication" value="retirer" class="btn btn-sm btn-outline-danger fw-bold">
+                                        <i class="fa-solid fa-eye-slash me-1"></i> Retirer la publication
+                                    </button>
+                                {% else %}
+                                    <button type="submit" name="action_publication" value="publier" class="btn btn-sm btn-success fw-bold">
+                                        <i class="fa-solid fa-check-circle me-1"></i> Autoriser la publication des résultats
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </div>
+
+                        {% if deliberation_data and classe_delib %}
+                        <!-- Statistiques classe -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <div class="card border-0 bg-light p-3 text-center">
+                                    <h6 class="text-muted small">Effectif</h6>
+                                    <h3 class="fw-bold text-uac-blue m-0">{{ deliberation_data.stats.total }}</h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-0 bg-success-subtle p-3 text-center">
+                                    <h6 class="text-muted small">Réussite globale</h6>
+                                    <h3 class="fw-bold text-success m-0">{{ deliberation_data.stats.reussite }} <small>({{ deliberation_data.stats.pct_reussite }}%)</small></h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-0 bg-danger-subtle p-3 text-center">
+                                    <h6 class="text-muted small">Échec global</h6>
+                                    <h3 class="fw-bold text-danger m-0">{{ deliberation_data.stats.echec }} <small>({{ deliberation_data.stats.pct_echec }}%)</small></h3>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card border-0 bg-warning-subtle p-3 text-center">
+                                    <h6 class="text-muted small">En attente / Partiel</h6>
+                                    <h3 class="fw-bold text-warning m-0">{{ deliberation_data.stats.attente }}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th rowspan="2" class="align-middle">Élève</th>
+                                        <th rowspan="2" class="text-center align-middle">Situation financière</th>
+                                        {% for cours in deliberation_data.cours_list %}
+                                        <th colspan="3" class="text-center small">{{ cours.libelle|truncatechars:20 }}</th>
+                                        {% endfor %}
+                                        <th rowspan="2" class="text-center align-middle">Statut</th>
+                                        <th rowspan="2" class="text-center align-middle">Décision Jury</th>
+                                    </tr>
+                                    <tr>
+                                        {% for cours in deliberation_data.cours_list %}
+                                        <th class="text-center small">S1</th>
+                                        <th class="text-center small">S2</th>
+                                        <th class="text-center small">Ann.</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ligne in deliberation_data.lignes %}
+                                    <tr>
+                                        <td class="fw-bold small">
+                                            {{ ligne.eleve.nom }} {{ ligne.eleve.postnom }}
+                                            <br><code class="text-muted">{{ ligne.eleve.matriculeEleve }}</code>
+                                        </td>
+                                        <td class="text-center small">
+                                            <span class="text-success fw-bold">{{ ligne.total_paye }}$</span> / {{ ligne.total_du }}$
+                                            {% if ligne.reste_a_payer > 0 %}
+                                                <br><span class="badge bg-danger">Reste {{ ligne.reste_a_payer }}$</span>
+                                            {% else %}
+                                                <br><span class="badge bg-success">En règle</span>
+                                            {% endif %}
+                                        </td>
+                                        {% for cr in ligne.cours_resultats %}
+                                        <td class="text-center small {% if cr.s1 == 'Réussi' %}table-success{% elif cr.s1 == 'Échec' %}table-danger{% endif %}">{{ cr.s1 }}</td>
+                                        <td class="text-center small {% if cr.s2 == 'Réussi' %}table-success{% elif cr.s2 == 'Échec' %}table-danger{% endif %}">{{ cr.s2 }}</td>
+                                        <td class="text-center small fw-bold {% if cr.annuel == 'Réussi' %}table-success{% elif cr.annuel == 'Échec' %}table-danger{% endif %}">{{ cr.annuel }}</td>
+                                        {% endfor %}
+                                        <td class="text-center">
+                                            {% if ligne.statut_global == 'Réussi' %}
+                                                <span class="badge bg-success">Réussi</span>
+                                            {% elif ligne.statut_global == 'Échec' %}
+                                                <span class="badge bg-danger">Échec</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark">{{ ligne.statut_global }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center" style="min-width: 200px;">
+                                            <form method="POST" class="d-flex flex-column gap-1">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="decision_jury" value="1">
+                                                <input type="hidden" name="matricule_eleve" value="{{ ligne.eleve.matriculeEleve }}">
+                                                <input type="hidden" name="classe_id" value="{{ classe_delib.pk }}">
+                                                <select name="decision" class="form-select form-select-sm">
+                                                    {% for val, label in decisions_jury_choices %}
+                                                    <option value="{{ val }}" {% if ligne.decision_jury and ligne.decision_jury.decision == val %}selected{% endif %}>{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <input type="text" name="commentaire" class="form-control form-control-sm" placeholder="Commentaire..." value="{{ ligne.decision_jury.commentaire|default:'' }}">
+                                                <button type="submit" class="btn btn-sm btn-primary fw-bold">Enregistrer</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="20" class="text-center text-muted py-4">Aucun élève dans cette classe.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted text-center py-4">Sélectionnez une classe pour commencer la délibération.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+        </div> 
+    </div> 
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var hash = window.location.hash;
+        
+        // Si l'URL contient ?classe_id=, on force l'affichage de l'onglet attribution-panel
+        if (!hash && window.location.search.includes('classe_id') && !window.location.search.includes('classe_delib')) {
+            hash = '#attribution-panel';
+        }
+        if (!hash && window.location.search.includes('classe_delib')) {
+            hash = '#deliberation-panel';
+        }
+
+        if (hash) {
+            var triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
+            if (triggerEl) {
+                // Retire la classe 'active' de tous les boutons et contenus
+                document.querySelectorAll('.sidebar-menu .nav-link').forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+                document.querySelectorAll('.tab-content .tab-pane').forEach(function(pane) {
+                    pane.classList.remove('show', 'active');
+                });
+
+                // Ajoute la classe 'active' au bon bouton et au bon contenu
+                triggerEl.classList.add('active');
+                var targetPane = document.querySelector(hash);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

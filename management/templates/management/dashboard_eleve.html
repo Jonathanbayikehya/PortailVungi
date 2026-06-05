@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Élève | Institut Vungi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --uac-blue: #003366;
+            --uac-gold: #FFCC00;
+        }
+        body {
+            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+        }
+
+        /* --- SIDEBAR CONFIGURATION --- */
+        .sidebar {
+            background: var(--uac-blue);
+            height: 100vh;
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            transition: all 0.3s ease;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        @media (min-width: 768px) {
+            .sidebar { width: 240px; }
+            .main-content { margin-left: 240px; }
+            .sidebar .nav-link { text-align: left; padding: 12px 20px; display: block; }
+            .sidebar .nav-link i { margin-right: 10px; width: 25px; }
+            .sidebar .nav-link span { font-size: 1rem; display: inline; }
+        }
+
+        @media (max-width: 767px) {
+            .sidebar { width: 85px; }
+            .main-content { margin-left: 85px; }
+            .sidebar .nav-link { 
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 10px 2px;
+                font-size: 0.65rem;
+                text-align: center;
+            }
+            .sidebar .nav-link i { font-size: 1.3rem; margin-bottom: 4px; }
+            .sidebar h6, .sidebar hr { display: none; }
+        }
+
+        /* --- MENU STYLE --- */
+        .nav-pills .nav-link {
+            color: rgba(255,255,255,0.7);
+            margin: 5px 8px;
+            border-radius: 10px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--uac-gold) !important;
+            color: var(--uac-blue) !important;
+            font-weight: bold;
+        }
+
+        /* --- DESIGN DES CARTES --- */
+        .main-content { padding: 25px; }
+        .portal-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+        }
+        .text-uac { color: var(--uac-blue); }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="text-center mb-4 px-2">
+        <i class="fas fa-university fa-2x text-warning"></i>
+        <h6 class="fw-bold text-uppercase mt-2 small">Institut Vungi</h6>
+        <hr class="mx-3 opacity-25">
+    </div>
+
+    <ul class="nav nav-pills flex-column" id="v-pills-tab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="pill" href="#pane-accueil" role="tab">
+                <i class="fas fa-th-large"></i> <span>Accueil</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#pane-profil" role="tab">
+                <i class="fas fa-user-edit"></i> <span>Mon Profil</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#pane-resultat" role="tab">
+                <i class="fas fa-poll-h"></i> <span>Résultats</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="pill" href="#pane-frais" role="tab">
+                <i class="fas fa-file-invoice-dollar"></i> <span>Mes Frais</span>
+            </a>
+        </li>
+        
+        <li class="mt-auto p-2">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100 border-0">
+                    <i class="fas fa-power-off"></i> <span class="d-block d-md-inline">Quitter</span>
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<main class="main-content">
+    <div class="tab-content" id="v-pills-tabContent">
+        
+        <!-- ========================================== -->
+        <!-- ONGLETS : ACCUEIL                          -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade show active" id="pane-accueil" role="tabpanel">
+            <div class="portal-card text-center">
+                <h2 class="fw-bold text-uac">BIENVENUE SUR VOTRE PORTAIL</h2>
+                <p class="text-muted fs-5">{{ eleve.prenom }} {{ eleve.nom }} {{ eleve.postnom }}</p>
+                <hr class="mx-auto w-25" style="border-top: 3px solid var(--uac-gold);">
+                <p class="small text-uppercase fw-bold text-primary">Session de suivi académique 2025-2026</p>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ONGLETS : PROFIL PERSONNEL                 -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="pane-profil" role="tabpanel">
+            <div class="portal-card">
+                <div class="d-flex align-items-center mb-4">
+                    <i class="fas fa-id-card fa-2x me-3 text-primary"></i>
+                    <h4 class="mb-0 fw-bold text-uac">INFORMATIONS PERSONNELLES</h4>
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold">NOM COMPLET</label>
+                        <p class="fs-5 border-bottom pb-1">{{ eleve.nom }} {{ eleve.postnom }} {{ eleve.prenom }}</p>
+                        
+                        <label class="text-muted small fw-bold">MATRICULE ÉLÈVE</label>
+                        <p class="fs-5 border-bottom pb-1 fw-bold text-primary">{{ eleve.matriculeEleve }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-bold">CLASSE ET OPTION</label>
+                        <p class="fs-5 border-bottom pb-1">{{ eleve.classe }}</p>
+                        
+                        <label class="text-muted small fw-bold">GENRE</label>
+                        <p class="fs-5 border-bottom pb-1">{{ eleve.sexe }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ONGLETS : RÉSULTATS (BULLETINS FILTRÉS)     -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="pane-resultat" role="tabpanel">
+
+            {% if not resultats_publies %}
+            <div class="alert alert-warning border-start border-warning border-5 shadow-sm mb-4">
+                <h5 class="fw-bold"><i class="fas fa-clock me-2"></i>Résultats non encore disponibles</h5>
+                <p class="mb-0">Le proviseur n'a pas encore autorisé la publication des résultats. Revenez consulter cette page ultérieurement.</p>
+            </div>
+            {% endif %}
+
+            {% if resultats_publies and decision_jury and decision_jury.decision != 'EN_ATTENTE' %}
+            <div class="alert alert-primary border-start border-primary border-5 shadow-sm mb-4">
+                <h5 class="fw-bold mb-1"><i class="fas fa-gavel me-2"></i>Décision du Jury</h5>
+                <p class="mb-0 fs-5 fw-bold text-uac">{{ decision_jury.get_decision_display }}</p>
+                {% if decision_jury.commentaire %}<p class="mb-0 mt-1 small text-muted"><em>{{ decision_jury.commentaire }}</em></p>{% endif %}
+            </div>
+            {% elif resultats_publies %}
+            <div class="alert alert-secondary mb-4 small"><i class="fas fa-hourglass-half me-2"></i>Décision du jury : en attente de délibération.</div>
+            {% endif %}
+            
+            <!-- Premier Semestre -->
+            <div class="portal-card mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt fa-2x me-3 text-primary"></i>
+                        <h4 class="mb-0 fw-bold text-uac">PREMIER SEMESTRE (P1, P2, EX1)</h4>
+                    </div>
+                    {% if resultats_publies and moy_s1_pct is not None and autorise_ex1 %}
+                    <div class="text-end p-3 rounded bg-light border">
+                        <small class="text-muted d-block">Moyenne générale S1</small>
+                        <span class="fs-3 fw-bold text-uac">{{ moy_s1_pct }}%</span>
+                        <small class="text-muted d-block">({{ moy_s1_pts }} / {{ moy_s1_max }} pts)</small>
+                    </div>
+                    {% elif resultats_publies and not autorise_ex1 %}
+                    <span class="badge bg-danger p-2">Paiement insuffisant pour voir la moyenne</span>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th rowspan="2" class="text-start align-middle">Matière</th>
+                                <th colspan="2">Période 1 (P1)</th>
+                                <th colspan="2">Période 2 (P2)</th>
+                                <th colspan="2" class="table-warning text-dark">Examen 1 (EX1)</th>
+                                <th rowspan="2" class="align-middle bg-light">Total S1</th>
+                                <th rowspan="2" class="align-middle bg-light">Verdict</th>
+                            </tr>
+                            <tr>
+                                <th class="small py-1" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted" style="font-size:0.8rem;">Max</th>
+                                <th class="small py-1" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted" style="font-size:0.8rem;">Max</th>
+                                <th class="small py-1 table-warning" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted table-warning" style="font-size:0.8rem;">Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in bulletin_s1 %}
+                            <tr>
+                                <td class="fw-bold">{{ ligne.cours.libelle }}</td>
+                                
+                                <!-- Période 1 -->
+                                <td class="text-center">
+                                    {% if autorise_p1 %}
+                                        <span class="fw-bold text-primary">{{ ligne.p1.note }}</span>
+                                        {% if ligne.p1.reussi is not None %}
+                                            <br>{% if ligne.p1.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.p1.existe %}
+                                            <span class="text-danger small fw-semibold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.p1.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small">{{ ligne.p1.max }}</td>
+                                
+                                <!-- Période 2 -->
+                                <td class="text-center">
+                                    {% if autorise_p2 %}
+                                        <span class="fw-bold text-primary">{{ ligne.p2.note }}</span>
+                                        {% if ligne.p2.reussi is not None %}
+                                            <br>{% if ligne.p2.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.p2.existe %}
+                                            <span class="text-danger small fw-semibold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.p2.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small">{{ ligne.p2.max }}</td>
+                                
+                                <!-- Examen 1 -->
+                                <td class="text-center table-warning">
+                                    {% if autorise_ex1 %}
+                                        <span class="fw-bold text-danger">{{ ligne.ex1.note }}</span>
+                                        {% if ligne.ex1.reussi is not None %}
+                                            <br>{% if ligne.ex1.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.ex1.existe %}
+                                            <span class="text-danger small fw-semibold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.ex1.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small table-warning">{{ ligne.ex1.max }}</td>
+                                
+                                <!-- Total S1 -->
+                                <td class="text-center fw-bold bg-light">
+                                    {% if s1_toutes_cotes and autorise_p1 and autorise_p2 and autorise_ex1 %}
+                                        {{ ligne.total_obtenu }}
+                                    {% else %}
+                                        <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Masqué</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if s1_toutes_cotes %}
+                                        {% if ligne.verdict == "Réussi" %}
+                                            <span class="badge bg-success">Réussi</span>
+                                        {% elif ligne.verdict == "Échec" %}
+                                            <span class="badge bg-danger">Échec</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary small"><i class="fas fa-eye-slash"></i> Masqué</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-light text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Aucune note disponible pour le Premier Semestre.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Alerte globale si aucune tranche du S1 n'est payée -->
+                {% if resultats_publies and not autorise_p1 and not autorise_p2 and not autorise_ex1 %}
+                <div class="alert alert-danger text-center my-3 py-3 border-start border-danger border-5 rounded shadow-sm">
+                    <i class="fas fa-exclamation-triangle text-danger mb-2"></i>
+                    <p class="mb-0 text-muted small fw-bold">Veuillez passer à la comptabilité pour régulariser votre situation financière et consulter vos notes.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Second Semestre -->
+            {% if afficher_s2 %}
+            <div class="portal-card">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-check fa-2x me-3 text-success"></i>
+                        <h4 class="mb-0 fw-bold text-uac">SECOND SEMESTRE (P3, P4, EX2)</h4>
+                    </div>
+                    {% if resultats_publies and moy_s2_pct is not None and autorise_s2 %}
+                    <div class="text-end p-3 rounded bg-light border">
+                        <small class="text-muted d-block">Moyenne générale S2</small>
+                        <span class="fs-3 fw-bold text-success">{{ moy_s2_pct }}%</span>
+                        <small class="text-muted d-block">({{ moy_s2_pts }} / {{ moy_s2_max }} pts)</small>
+                    </div>
+                    {% elif resultats_publies and not autorise_s2 %}
+                    <span class="badge bg-danger p-2">Soldez 100% des frais pour voir le S2</span>
+                    {% endif %}
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th rowspan="2" class="text-start align-middle">Matière</th>
+                                <th colspan="2">Période 3 (P3)</th>
+                                <th colspan="2">Période 4 (P4)</th>
+                                <th colspan="2" class="table-warning text-dark">Examen 2 (EX2)</th>
+                                <th rowspan="2" class="align-middle bg-light">Total S2</th>
+                                <th rowspan="2" class="align-middle bg-light">Verdict</th>
+                            </tr>
+                            <tr>
+                                <th class="small py-1" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted" style="font-size:0.8rem;">Max</th>
+                                <th class="small py-1" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted" style="font-size:0.8rem;">Max</th>
+                                <th class="small py-1 table-warning" style="font-size:0.8rem;">Note</th>
+                                <th class="small py-1 text-muted table-warning" style="font-size:0.8rem;">Max</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ligne in bulletin_s2 %}
+                            <tr>
+                                <td class="fw-bold">{{ ligne.cours.libelle }}</td>
+                                
+                                <!-- Période 3 -->
+                                <td class="text-center">
+                                    {% if autorise_s2 %}
+                                        <span class="fw-bold text-primary">{{ ligne.p3.note }}</span>
+                                        {% if ligne.p3.reussi is not None %}
+                                            <br>{% if ligne.p3.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.p3.existe %}
+                                            <span class="text-danger small fw-bold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.p3.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small">{{ ligne.p3.max }}</td>
+                                
+                                <!-- Période 4 -->
+                                <td class="text-center">
+                                    {% if autorise_s2 %}
+                                        <span class="fw-bold text-primary">{{ ligne.p4.note }}</span>
+                                        {% if ligne.p4.reussi is not None %}
+                                            <br>{% if ligne.p4.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.p4.existe %}
+                                            <span class="text-danger small fw-bold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.p4.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small">{{ ligne.p4.max }}</td>
+                                
+                                <!-- Examen 2 -->
+                                <td class="text-center table-warning">
+                                    {% if autorise_s2 %}
+                                        <span class="fw-bold text-danger">{{ ligne.ex2.note }}</span>
+                                        {% if ligne.ex2.reussi is not None %}
+                                            <br>{% if ligne.ex2.reussi %}<span class="badge bg-success" style="font-size: 0.65rem;">V</span>{% else %}<span class="badge bg-danger" style="font-size: 0.65rem;">E</span>{% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if ligne.ex2.existe %}
+                                            <span class="text-danger small fw-bold" style="font-size: 0.7rem;"><i class="fas fa-lock"></i> {{ ligne.ex2.note }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                                <td class="text-center text-muted small table-warning">{{ ligne.ex2.max }}</td>
+                                
+                                <!-- Total S2 -->
+                                <td class="text-center fw-bold bg-light">
+                                    {% if s2_toutes_cotes and autorise_s2 %}
+                                        {{ ligne.total_obtenu }}
+                                    {% else %}
+                                        <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Masqué</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if s2_toutes_cotes and autorise_s2 %}
+                                        {% if ligne.verdict == "Réussi" %}
+                                            <span class="badge bg-success">Réussi</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Échec</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-light text-muted small">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-muted">
+                                    <i class="fas fa-info-circle me-2"></i>Le second semestre n'est pas encore complété.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% if resultats_publies and not autorise_s2 %}
+                <div class="alert alert-danger text-center my-3 py-3 border-start border-danger border-5 rounded shadow-sm">
+                    <i class="fas fa-exclamation-triangle text-danger mb-2"></i>
+                    <h5 class="fw-bold text-dark small mb-1">Second Semestre Restreint</h5>
+                    <p class="mb-0 text-muted small">Veuillez passer à la comptabilité pour régler votre situation financière (100% des frais).</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- ONGLETS : COMPTABILITÉ & HISTORIQUE CHRONO -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="pane-frais" role="tabpanel">
+            <div class="portal-card">
+                <div class="d-flex align-items-center mb-4">
+                    <i class="fas fa-wallet fa-2x me-3 text-success"></i>
+                    <h4 class="mb-0 fw-bold text-uac">SITUATION FINANCIÈRE & REÇUS</h4>
+                </div>
+
+                <!-- Les 3 Cartes Éducatives / Compteurs globaux -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light border text-center">
+                            <span class="text-muted small fw-bold text-uppercase">Total Exigé (Frais Dus)</span>
+                            <h3 class="fw-bold text-dark mt-1">{{ total_du }} $</h3>
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">Fixé pour la {{ eleve.classe }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light border text-center" style="background-color: #f4faf7 !important;">
+                            <span class="text-muted small fw-bold text-uppercase">Total Déjà Payé</span>
+                            <h3 class="fw-bold text-success mt-1">{{ total_paye }} $</h3>
+                            <small class="text-muted" style="font-size: 0.75rem;">Cumul de tous vos versements</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 rounded bg-light border text-center" style="background-color: #fdf5f5 !important;">
+                            <span class="text-muted small fw-bold text-uppercase">Reste à Payer</span>
+                            <h3 class="fw-bold text-danger mt-1">{{ reste_a_payer }} $</h3>
+                            <small class="text-muted" style="font-size: 0.75rem;">Solde restant à liquider</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tableau avec Cumul et Reste progressifs calculés ligne par ligne par le backend -->
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light text-center">
+                            <tr>
+                                <th>N° Reçu</th>
+                                <th>Date de versement</th>
+                                <th>Montant Versé ($)</th>
+                                <th class="table-secondary fw-bold">Total Déjà Payé ($)</th>
+                                <th class="table-light text-danger fw-bold">Reste à Payer ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in paiements %}
+                            <tr>
+                                <td class="text-center fw-bold text-secondary">
+                                    <i class="fas fa-receipt me-1 text-muted"></i> 
+                                    {{ p.numRecur }}
+                                </td>
+                                <td class="text-center">{{ p.date|date:"d/m/Y" }}</td>
+                                <td class="text-center fw-bold text-success">+ {{ p.montant }} $</td>
+                                <!-- Utilisation des valeurs calculées à l'instant T par la boucle views.py -->
+                                <td class="text-center fw-bold bg-light">{{ p.cumul_paye }} $</td>
+                                <td class="text-center fw-bold bg-light text-danger">{{ p.reste_a_payer_instant }} $</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="fas fa-exclamation-circle me-2"></i> Aucun versement n'a encore été enregistré pour cet élève.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="small text-muted text-end mt-3 italic">Situation financière arrêtée le {% now "d/m/Y à H:i" %}</p>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

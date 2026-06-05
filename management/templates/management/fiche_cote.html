@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Cotes Officielle | Institut Vungi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --uac-blue: #003366; --uac-gold: #FFCC00; }
+        body { background-color: #f4f5f7; font-family: 'Segoe UI', sans-serif; }
+        .navbar-uac { background: var(--uac-blue); color: white; }
+        .portal-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .text-uac { color: var(--uac-blue); }
+        .table-rdc th { text-align: center; vertical-align: middle; font-size: 0.85rem; font-weight: bold; }
+        .input-cote { width: 90px; text-align: center; font-weight: bold; border-radius: 4px; }
+       .bg-semestre-1 { 
+    background-color: #eef7ff !important; 
+    color: #003366 !important; /* Ajout du !important pour écraser Bootstrap */
+}
+.bg-semestre-2 { 
+    background-color: #fffbe6 !important; 
+    color: #b78103 !important; /* Ajout du !important pour écraser Bootstrap */
+}
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-uac shadow-sm mb-4">
+    <div class="container-fluid py-2">
+        <a href="{% url 'espace_enseignant' %}" class="btn btn-outline-light btn-sm fw-bold">
+            <i class="fas fa-arrow-left me-2"></i>Tableau de bord
+        </a>
+        <span class="navbar-brand mb-0 h1 fw-bold text-warning small">PROGRAMME NATIONAL | ENCODAGE DES NOTES</span>
+    </div>
+</nav>
+
+<div class="container-fluid px-4">
+    <div class="portal-card border-start border-4 border-primary">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h4 class="fw-bold text-uac m-0"><i class="fas fa-book-open me-2"></i>{{ cours.libelle }}</h4>
+                <small class="text-muted">Filiation : {{ cours.section_cours.option.nomOption|default:"Enseignement Technique Commercial" }}</small>
+            </div>
+            {% if classe_selectionnee %}
+                <div class="badge bg-primary fs-5 px-4 py-2">{{ classe_selectionnee.nomClasse }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+   <div class="portal-card">
+        <h6 class="fw-bold text-uac mb-3"><i class="fas fa-filter me-2"></i>Sélectionner une classe où ce cours est dispensé :</h6>
+        <div class="d-flex flex-wrap gap-2">
+            {% for cl in classes %}
+                <a href="?classe_id={{ cl.pk }}" class="btn {% if classe_selectionnee.pk == cl.pk %}btn-warning fw-bold text-dark shadow{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-chalkboard me-2"></i>
+                    {{ cl.nomClasse }} {{ cl.option.nomOption }}
+                </a>
+            {% empty %}
+                <div class="alert alert-warning w-100 m-0">Aucune classe restreinte trouvée pour ce cours.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            {% if 'success' in message.tags %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% if classe_selectionnee %}
+        <div class="portal-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-uac m-0"><i class="fas fa-table me-2"></i>Grille des Périodes & Examens</h5>
+                <span class="badge bg-dark px-3 py-2">Périodes : /{{ max_p }} pts | Examens : /{{ max_ex }} pts</span>
+            </div>
+
+           <form method="POST">
+                {% csrf_token %}
+                
+                <table class="table table-bordered align-middle text-center m-0">
+                    
+                    <thead class="table-dark">
+                        <tr>
+                            <th rowspan="2" style="width: 45px;">N°</th>
+                            <th rowspan="2" style="width: 110px;">Matricule</th>
+                            <th rowspan="2" style="width: 250px;" class="text-start">Nom, Postnom & Prénom</th>
+                            <th rowspan="2" style="width: 50px;">Sexe</th>
+                            <th colspan="3" class="bg-semestre-1">PREMIER SEMESTRE</th>
+                            <th colspan="3" class="bg-semestre-2">SECOND SEMESTRE</th>
+                        </tr>
+                        <tr>
+                            <th class="bg-semestre-1" style="width: 105px;">P1 (/{{ max_p }})</th>
+                            <th class="bg-semestre-1" style="width: 105px;">P2 (/{{ max_p }})</th>
+                            <th class="bg-semestre-1" style="width: 135px;">EXAMEN 1 (/{{ max_ex }})</th>
+                            <th class="bg-semestre-2" style="width: 105px;">P3 (/{{ max_p }})</th>
+                            <th class="bg-semestre-2" style="width: 105px;">P4 (/{{ max_p }})</th>
+                            <th class="bg-semestre-2" style="width: 135px;">EXAMEN 2 (/{{ max_ex }})</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in eleves_avec_cotes %}
+                        <tr>
+                            <td class="text-center text-muted font-monospace small">{{ forloop.counter }}</td>
+                            <td class="text-center font-monospace fw-bold text-secondary small">{{ item.eleve.matriculeEleve }}</td>
+                            <td class="text-start"><strong class="text-uppercase">{{ item.eleve.nom }}</strong> {{ item.eleve.postnom }} {{ item.eleve.prenom }}</td>
+                            <td class="text-center"><span class="badge {% if item.eleve.sexe == 'M' %}bg-primary{% else %}bg-danger{% endif %}">{{ item.eleve.sexe }}</span></td>
+                            
+                            <td class="bg-semestre-1">
+                                <input type="number" name="p1_{{ item.eleve.pk }}" value="{{ item.cotes.P1.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-primary" min="0" max="{{ max_p }}" step="0.5" placeholder="-"
+                                {% if item.cotes.P1.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+                            
+                            <td class="bg-semestre-1">
+                                <input type="number" name="p2_{{ item.eleve.pk }}" value="{{ item.cotes.P2.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-primary" min="0" max="{{ max_p }}" step="0.5" placeholder="-"
+                                {% if item.cotes.P2.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+                            
+                            <td class="bg-semestre-1">
+                                <input type="number" name="ex1_{{ item.eleve.pk }}" value="{{ item.cotes.EX1.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-2 border-primary" min="0" max="{{ max_ex }}" step="0.5" placeholder="-"
+                                {% if item.cotes.EX1.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+
+                            <td class="bg-semestre-2">
+                                <input type="number" name="p3_{{ item.eleve.pk }}" value="{{ item.cotes.P3.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-warning" min="0" max="{{ max_p }}" step="0.5" placeholder="-"
+                                {% if item.cotes.P3.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+                            
+                            <td class="bg-semestre-2">
+                                <input type="number" name="p4_{{ item.eleve.pk }}" value="{{ item.cotes.P4.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-warning" min="0" max="{{ max_p }}" step="0.5" placeholder="-"
+                                {% if item.cotes.P4.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+                            
+                            <td class="bg-semestre-2">
+                                <input type="number" name="ex2_{{ item.eleve.pk }}" value="{{ item.cotes.EX2.note|default_if_none:'' }}" class="form-control form-control-sm input-cote mx-auto border-2 border-warning" min="0" max="{{ max_ex }}" step="0.5" placeholder="-"
+                                {% if item.cotes.EX2.periode.statut != 'ACTIVE' %} readonly style="background-color: #e9ecef; cursor: not-allowed; opacity: 0.75;" {% endif %}>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">
+                                <i class="fas fa-users-slash fa-2x mb-2 d-block"></i> Aucun élève à afficher. Veuillez sélectionner une classe ci-dessus.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+
+                {% if classe_selectionnee %}
+                <div class="text-end mt-3 mb-5">
+                    <button type="submit" class="btn btn-success btn-lg fw-bold px-5 shadow">
+                        <i class="fas fa-save me-2"></i> ENREGISTRER TOUTES LES NOTES
+                    </button>
+                </div>
+                {% endif %}
+
+            </form>
+        </div>
+    {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="fas fa-hand-pointer fa-2x text-warning mb-2 animate__animated animate__bounce"></i>
+            <p class="fw-semibold">Sélectionnez une classe ci-dessus pour charger sa grille d'évaluation nationale.</p>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>

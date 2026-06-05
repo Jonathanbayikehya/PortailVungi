@@ -1,0 +1,97 @@
+:root {
+    --uac-blue: #003366;
+    --uac-gold: #FFCC00;
+    --uac-dark: #002244;
+    --uac-light: #f4f7f6;
+    --uac-blue-soft: #e6eef5;
+}
+
+body.vungi-body {
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    background-color: var(--uac-light);
+    color: #333;
+}
+
+h1, h2, h3, h4, h5, .vungi-title {
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+    color: var(--uac-blue);
+}
+
+.text-uac { color: var(--uac-blue) !important; }
+.bg-uac { background-color: var(--uac-blue) !important; }
+.border-uac { border-color: var(--uac-blue) !important; }
+
+.btn-uac {
+    background-color: var(--uac-blue);
+    color: #fff;
+    font-weight: 700;
+    border: none;
+}
+.btn-uac:hover { background-color: var(--uac-dark); color: #fff; }
+
+.btn-gold {
+    background-color: var(--uac-gold);
+    color: var(--uac-blue);
+    font-weight: 700;
+    border: none;
+}
+.btn-gold:hover { background-color: #e6b800; color: var(--uac-dark); }
+
+.vungi-topbar {
+    background: var(--uac-blue);
+    color: #fff;
+    border-bottom: 3px solid var(--uac-gold);
+    font-size: 0.85rem;
+}
+
+.vungi-navbar {
+    background: #fff !important;
+    box-shadow: 0 2px 12px rgba(0,51,102,0.1);
+}
+
+.vungi-navbar .nav-link {
+    color: var(--uac-dark) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+.vungi-navbar .nav-link:hover,
+.vungi-navbar .nav-link.active {
+    color: var(--uac-blue) !important;
+}
+
+.vungi-card {
+    background: #fff;
+    border: none;
+    border-top: 4px solid var(--uac-gold);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,51,102,0.08);
+}
+
+.vungi-sidebar {
+    background: var(--uac-blue);
+    color: #fff;
+    min-height: 100vh;
+}
+.vungi-sidebar .nav-link.active {
+    background: var(--uac-gold) !important;
+    color: var(--uac-blue) !important;
+    font-weight: 700;
+}
+
+.vungi-footer {
+    background: linear-gradient(180deg, var(--uac-dark) 0%, #001a33 100%);
+    border-top: 5px solid var(--uac-gold);
+    color: #fff;
+}
+
+.vungi-hero-overlay {
+    background: linear-gradient(135deg, rgba(0,51,102,0.88) 0%, rgba(0,34,68,0.75) 100%);
+}
+
+.section-institut {
+    background: linear-gradient(180deg, #fff 0%, var(--uac-blue-soft) 100%);
+}
+
+.badge-uac { background: var(--uac-blue); color: #fff; }
+.badge-gold { background: var(--uac-gold); color: var(--uac-dark); }
