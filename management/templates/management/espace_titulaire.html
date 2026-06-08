@@ -1,117 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Espace Titulaire - {{ classe.nomClasse }}</title>
-    <!-- Intégration de Bootstrap et FontAwesome -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
         :root {
             --uac-blue: #003366;
-            --uac-gold: #FFCC00;
+            --uac-gold: #ffcc00;
         }
-        body { 
-            background-color: #f4f7f6; 
+        body {
+            background: #f4f7f6;
             margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: "Segoe UI", system-ui, sans-serif;
         }
-        
-        /* --- ARCHITECTURE STRCTEMENT FIXE SUR LE CÔTÉ --- */
         .wrapper {
             display: flex;
-            align-items: stretch;
             width: 100%;
         }
-
-        .sidebar-menu { 
-            background-color: var(--uac-blue); 
-            color: white; 
-            flex-shrink: 0;
+        .sidebar-menu {
+            background: var(--uac-blue);
+            color: white;
+            width: 220px;
+            min-height: 100vh;
+            padding: 15px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px 5px;
-            min-height: 100vh;
-            transition: all 0.3s;
         }
-        
-        @media (min-width: 768px) {
-            .sidebar-menu { width: 220px; }
-            .sidebar-menu .nav-link span { display: inline-block !important; font-size: 0.9rem; margin-top: 5px; }
-        }
-
-        @media (max-width: 767.98px) {
-            .sidebar-menu { width: 75px; padding: 10px 2px; }
-            .sidebar-menu .nav-link span { font-size: 0.65rem; display: block; text-align: center; }
-            .hide-on-mobile { display: none !important; }
-        }
-        
         .user-profile-box {
             text-align: center;
             width: 100%;
             padding: 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .user-profile-box i { font-size: 2rem; color: var(--uac-gold); }
-        .user-profile-box span { font-size: 0.85rem; font-weight: 600; display: block; margin-top: 5px; color: #ffffff; }
-
-        .sidebar-menu .nav { flex-direction: column !important; width: 100%; gap: 10px; }
-        .sidebar-menu .nav-item { width: 100%; padding: 0 5px; }
-        .sidebar-menu .nav-link { 
-            color: rgba(255,255,255,0.8); 
-            border-radius: 8px; 
+        .user-profile-box i {
+            font-size: 2rem;
+            color: var(--uac-gold);
+        }
+        .sidebar-menu .nav {
+            flex-direction: column !important;
+            width: 100%;
+            gap: 10px;
+        }
+        .sidebar-menu .nav-item {
+            width: 100%;
+            padding: 0 5px;
+        }
+        .sidebar-menu .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            border-radius: 8px;
             text-align: center;
             padding: 12px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            width: 100%;
         }
-        .sidebar-menu .nav-link i { font-size: 1.3rem; margin-bottom: 3px; }
-        .sidebar-menu .nav-link.active { color: #003366 !important; background-color: var(--uac-gold) !important; font-weight: bold; }
-        
-        .main-content { flex-grow: 1; min-width: 0; }
-        .bg-uac-blue { background-color: var(--uac-blue) !important; color: white !important; }
-        .text-uac-blue { color: var(--uac-blue) !important; }
-        .card-header-flex { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-
-        /* Bloc d'en-tête officiel (Masqué sur écran) */
+        .sidebar-menu .nav-link.active {
+            color: #003366 !important;
+            background: var(--uac-gold) !important;
+            font-weight: bold;
+        }
+        .main-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        .text-uac-blue {
+            color: var(--uac-blue) !important;
+        }
+        .bg-uac-blue {
+            background: var(--uac-blue) !important;
+            color: white !important;
+        }
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         .print-header {
             display: none;
         }
-
-        /* ==========================================================================
-           --- CONFIGURATION CORRIGÉE POUR L'IMPRESSION PDF ---
-           ========================================================================== */
         @media print {
-            /* 1. Cacher les éléments interactifs et fioritures */
-            .sidebar-menu, 
-            .btn, 
-            .badge, 
+            .sidebar-menu,
+            .btn,
+            .badge,
             .alert,
             .card-header,
             .border-bottom {
                 display: none !important;
             }
-
-            /* 2. Libérer l'espace papier */
-            body {
-                background-color: #fff !important;
-                color: #000 !important;
-                font-size: 11pt;
-                padding: 0;
-                margin: 0;
+            .wrapper {
+                display: block !important;
             }
-            .wrapper { display: block !important; }
-            .main-content { padding: 0 !important; margin: 0 !important; width: 100% !important; }
-            .card { border: none !important; box-shadow: none !important; }
-            .card-body { padding: 0 !important; }
-
-            /* 3. Affichage de l'en-tête d'école demandé */
+            .main-content {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
             .print-header {
                 display: block !important;
                 text-align: center;
@@ -119,108 +108,81 @@
                 border-bottom: 2px double #000;
                 padding-bottom: 8px;
             }
-            .print-header h2 { font-weight: 800; font-size: 18pt; margin: 0; text-transform: uppercase; }
-            .print-header h4 { font-size: 13pt; margin: 5px 0; font-weight: 600; text-transform: uppercase; }
-            .print-header p { font-size: 11pt; margin: 3px 0; }
-
-            /* 4. Réactivation et stylisation forcée de l'en-tête du tableau */
             .table-print-header {
-                display: table-header-group !important; /* Force l'affichage des colonnes sur le PDF */
+                display: table-header-group !important;
             }
-            .table {
-                width: 100% !important;
-                border-collapse: collapse !important;
-                margin-top: 10px;
-            }
-            .table th, .table td {
+            .table th,
+            .table td {
                 border: 1px solid #000 !important;
-                padding: 6px 8px !important;
-                color: #000 !important;
-                background-color: transparent !important;
             }
-            .table th {
-                text-transform: uppercase;
-                font-size: 10pt;
-                font-weight: bold;
-                background-color: #e9ecef !important; /* Fond gris clair pour l'en-tête des colonnes */
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
+        }
+        @media (max-width: 767.98px) {
+            .sidebar-menu {
+                width: 75px;
+            }
+            .hide-on-mobile {
+                display: none !important;
+            }
+            .sidebar-menu .nav-link span {
+                font-size: 0.65rem;
+                display: block;
                 text-align: center;
             }
         }
     </style>
 </head>
 <body>
-
 <div class="wrapper">
-    
-    <!-- --- BARRE LATÉRALE VERTICALE --- -->
+    <!-- SIDEBAR -->
     <div class="sidebar-menu">
-        <div class="logo-vungi text-center mb-2 mt-2" style="color: var(--uac-gold);">
+        <div class="logo-vungi text-center mb-2 mt-2" style="color: var(--uac-gold)">
             <i class="fa-solid fa-building-columns"></i>
-            <small class="d-block fw-bold hide-on-mobile mt-1" style="font-size: 0.8rem; letter-spacing: 1px;">VUNGI PORTAL</small>
+            <small class="d-block fw-bold hide-on-mobile mt-1" style="font-size: 0.8rem; letter-spacing: 1px">VUNGI PORTAL</small>
         </div>
-
         <div class="user-profile-box mb-4">
             <i class="fa-solid fa-circle-user"></i>
             <span class="hide-on-mobile">{{ enseignant.nom }} {{ enseignant.postnom }}</span>
-            <small class="text-white-50 d-block hide-on-mobile" style="font-size: 0.75rem;">Titulaire</small>
+            <small class="text-white-50 d-block hide-on-mobile" style="font-size: 0.75rem">Titulaire</small>
         </div>
-        
         <ul class="nav nav-pills" id="titulaireTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="liste-tab" data-bs-toggle="tab" data-bs-target="#liste-panel" type="button" role="tab">
-                    <i class="fa-solid fa-users"></i>
-                    <span>Liste des élèves</span>
+                    <i class="fa-solid fa-users"></i><span>Liste des élèves</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="suivi-tab" data-bs-toggle="tab" data-bs-target="#suivi-panel" type="button" role="tab">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Suivi / Clôture</span>
+                    <i class="fa-solid fa-chart-line"></i><span>Suivi / Clôture</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="enseignants-tab" data-bs-toggle="tab" data-bs-target="#enseignants-panel" type="button" role="tab">
-                    <i class="fa-solid fa-chalkboard-user"></i>
-                    <span>Enseignants / Cours</span>
+                    <i class="fa-solid fa-chalkboard-user"></i><span>Enseignants / Cours</span>
                 </button>
             </li>
         </ul>
-        
         <div class="mt-auto w-100 px-1">
-            <a href="{% url 'home' %}" class="nav-link text-danger fw-bold" style="background-color: rgba(220, 53, 69, 0.1);">
-                <i class="fa-solid fa-power-off text-danger"></i>
-                <span>Quitter</span>
+            <a href="{% url 'home' %}" class="nav-link text-danger fw-bold" style="background-color: rgba(220, 53, 69, 0.1)">
+                <i class="fa-solid fa-power-off text-danger"></i><span>Quitter</span>
             </a>
         </div>
     </div>
 
-    <!-- --- ZONE DE CONTENU PRINCIPAL --- -->
+    <!-- MAIN CONTENT -->
     <div class="main-content px-3 px-md-4 py-4">
-        
-        <!-- --- EN-TÊTE D'IMPRESSION (S'affiche uniquement sur le PDF) --- -->
         <div class="print-header">
             <h2>INSTITUT VUNGI</h2>
             <h4>REPERTOIRE NOMINAL DES ELEVES</h4>
-            <p>
-                <strong>Classe :</strong> {{ classe.nomClasse }} 
-                {% if classe.option %}
-                    | <strong>Option :</strong> {{ classe.option.nomOption }}
-                {% endif %}
-            </p>
-            <p><strong>Année Scolaire :</strong> 2025-2026</p>
+            <p><strong>Classe :</strong> {{ classe.nomClasse }} {% if classe.option %}| <strong>Option :</strong> {{ classe.option.nomOption }} {% endif %}</p>
+            <p><strong>Année Scolaire :</strong> {{ classe.annee }}</p>
         </div>
 
-        <!-- En-tête classique sur Écran -->
         <div class="d-flex justify-content-between flex-wrap align-items-center pt-2 pb-2 mb-3 border-bottom gap-2">
             <div>
                 <h1 class="h3 text-uac-blue fw-bold m-0">Tableau de bord Titulaire</h1>
                 <div class="mt-1">
                     <span class="badge bg-secondary me-1">{{ classe.nomClasse }}</span>
-                    {% if classe.option %}
-                        <span class="badge bg-dark text-uppercase">{{ classe.option.nomOption }}</span>
-                    {% endif %}
+                    {% if classe.option %}<span class="badge bg-dark text-uppercase">{{ classe.option.nomOption }}</span>{% endif %}
                 </div>
             </div>
             <div>
@@ -230,19 +192,28 @@
             </div>
         </div>
 
-        <!-- ZONE DES CONTENUS -->
+        <!-- MESSAGES FLASH (TOUS) -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}danger{% else %}info{% endif %} alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fas {% if 'success' in message.tags %}fa-check-circle{% elif 'error' in message.tags %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <div class="tab-content" id="titulaireTabContent">
-            
-            <!-- 1. PANEL : LISTE DES ÉLÈVES -->
+            <!-- PANEL 1 : LISTE DES ELEVES -->
             <div class="tab-pane fade show active" id="liste-panel" role="tabpanel" aria-labelledby="liste-tab">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white card-header-flex py-3 border-bottom">
                         <h5 class="card-title mb-0 text-uac-blue fw-bold">
-                            <i class="fa-solid fa-graduation-cap me-2"></i> Répertoire Nominal
+                            <i class="fa-solid fa-graduation-cap me-2"></i> RÉPERTOIRE NOMINAL
                         </h5>
                         <div class="d-flex align-items-center gap-2">
-                            <button onclick="window.print();" class="btn btn-outline-danger btn-sm fw-bold shadow-sm px-3">
-                                <i class="fa-solid fa-file-pdf me-1"></i> Imprimer la liste en PDF
+                            <button onclick="window.print()" class="btn btn-outline-danger btn-sm fw-bold shadow-sm px-3">
+                                <i class="fa-solid fa-file-pdf me-1"></i> Imprimer la liste
                             </button>
                             <span class="badge bg-uac-blue rounded-pill px-3 py-2">{{ suivi_eleves|length }} Inscrits</span>
                         </div>
@@ -250,10 +221,9 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-striped align-middle mb-0">
-                                <!-- En-tête de colonnes sécurisé pour l'impression -->
                                 <thead class="table-print-header">
                                     <tr class="table-dark">
-                                        <th scope="col" style="width: 50px;" class="text-center bg-uac-blue">N°</th>
+                                        <th scope="col" style="width: 50px" class="text-center bg-uac-blue">N°</th>
                                         <th scope="col" class="bg-uac-blue">Matricule</th>
                                         <th scope="col" class="bg-uac-blue">Nom</th>
                                         <th scope="col" class="bg-uac-blue">Postnom</th>
@@ -269,20 +239,10 @@
                                         <td class="fw-bold text-uppercase text-uac-blue">{{ item.eleve.nom }}</td>
                                         <td class="text-uppercase">{{ item.eleve.postnom }}</td>
                                         <td>{{ item.eleve.prenom }}</td>
-                                        <td class="text-center">
-                                            {% if item.eleve.genre == 'M' or item.eleve.genre == 'Masculin' %}
-                                                <span>M</span>
-                                            {% else %}
-                                                <span>F</span>
-                                            {% endif %}
-                                        </td>
+                                        <td class="text-center">{% if item.eleve.sexe == 'M' or item.eleve.sexe == 'Masculin' %}M{% else %}F{% endif %}</td>
                                     </tr>
                                     {% empty %}
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            <i class="fa-solid fa-folder-open display-4 d-block mb-2"></i>Aucun élève inscrit.
-                                        </td>
-                                    </tr>
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun élève inscrit.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -291,112 +251,94 @@
                 </div>
             </div>
 
-            <!-- 2. PANEL : SUIVI FINANCIER -->
+            <!-- PANEL 2 : SUIVI / CLÔTURE -->
             <div class="tab-pane fade" id="suivi-panel" role="tabpanel" aria-labelledby="suivi-tab">
-
                 {% if centralisation %}
                     {% if centralisation.est_valide %}
-                    <div class="alert alert-success shadow-sm mb-3">
-                        <h6 class="fw-bold"><i class="fa-solid fa-check-circle me-2"></i>Centralisation validée par le Proviseur</h6>
-                        <p class="mb-0 small">Validée le {{ centralisation.date_validation|date:"d/m/Y à H:i" }}</p>
-                        {% if centralisation.feedback_proviseur %}
-                        <hr class="my-2">
-                        <strong>Retour du proviseur :</strong>
-                        <p class="mb-0 mt-1">{{ centralisation.feedback_proviseur }}</p>
-                        {% endif %}
-                    </div>
+                        <div class="alert alert-success shadow-sm mb-3">
+                            <h6 class="fw-bold"><i class="fa-solid fa-check-circle me-2"></i>Centralisation validée par le Proviseur</h6>
+                            <p class="mb-0 small">Validée le {{ centralisation.date_validation|date:'d/m/Y à H:i' }}</p>
+                            {% if centralisation.feedback_proviseur %}
+                                <hr class="my-2">
+                                <strong>Retour du proviseur :</strong>
+                                <p class="mb-0 mt-1">{{ centralisation.feedback_proviseur }}</p>
+                            {% endif %}
+                        </div>
                     {% else %}
-                    <div class="alert alert-info shadow-sm mb-3">
-                        <i class="fa-solid fa-paper-plane me-2"></i>Soumis au proviseur le {{ centralisation.date_soumission|date:"d/m/Y à H:i" }} — en attente de validation.
-                    </div>
+                        <div class="alert alert-info shadow-sm mb-3">
+                            <i class="fa-solid fa-paper-plane me-2"></i>Soumis au proviseur le {{ centralisation.date_soumission|date:'d/m/Y à H:i' }} — en attente de validation.
+                        </div>
                     {% endif %}
                 {% endif %}
 
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white card-header-flex py-3 border-bottom">
                         <h5 class="card-title mb-0 text-success fw-bold">
-                            <i class="fa-solid fa-scale-balanced me-2"></i> État Global de la Classe
+                            <i class="fa-solid fa-scale-balanced me-2"></i> ÉTAT GLOBAL DE LA CLASSE
                         </h5>
-                        <!-- Bouton de soumission -->
-                        <form method="POST" class="mb-3">
+                        <form method="POST">
                             {% csrf_token %}
                             <button type="submit" name="valider_et_soumettre" class="btn btn-success fw-bold">
                                 <i class="fa-solid fa-paper-plane me-2"></i>Centraliser & Soumettre au Proviseur
                             </button>
                         </form>
-
-                            <!-- Zone d'affichage du message vert demandé -->
-                            {% if messages %}
-                                {% for message in messages %}
-                                    {% if "centralisation_success" in message.tags %}
-                                        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-                                            <i class="fa-solid fa-circle-check me-2"></i> {{ message }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-
-                            <!-- Ton tableau s'affiche ici ensuite... -->
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                        <table class="table table-hover table-bordered align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Élève</th>
-                                    <th class="text-center">Montant dû ($)</th>
-                                    <th class="text-center">Payé ($)</th>
-                                    <th class="text-center">Reste ($)</th>
-                                    <th class="text-center" style="min-width: 140px;">Cotes Encodées</th>
-                                    <th class="text-center">Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in suivi_eleves %}
-                                <tr>
-                                    <td class="fw-bold text-uac-blue">
-                                        {{ item.eleve.nom }} {{ item.eleve.postnom }}
-                                        <br><small class="text-muted">{{ item.eleve.matriculeEleve }}</small>
-                                    </td>
-                                    <td class="text-center fw-bold">{{ item.total_du }} $</td>
-                                    <td class="text-center text-success fw-bold">{{ item.total_paye }} $</td>
-                                    <td class="text-center text-danger fw-bold">
-                                        {% if item.reste_a_payer > 0 %}
-                                            {{ item.reste_a_payer }} $
-                                        {% else %}
-                                            <span class="badge bg-success px-2 py-1 rounded-pill">En règle</span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="progress" style="height: 18px;">
-                                            <div class="progress-bar {% if item.est_entierement_cote %}bg-success{% else %}bg-warning{% endif %}" 
-                                                 role="progressbar" 
-                                                 style="width: {{ item.pourcentage_cotes }}%;">
-                                                 <small style="font-size: 0.7rem; font-weight: bold;">{{ item.cotes_encodees }}/{{ item.cotes_attendues }}</small>
+                            <table class="table table-hover table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Élève</th>
+                                        <th class="text-center">Montant dû ($)</th>
+                                        <th class="text-center">Payé ($)</th>
+                                        <th class="text-center">Reste ($)</th>
+                                        <th class="text-center" style="min-width: 140px">Cotes Encodées</th>
+                                        <th class="text-center">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in suivi_eleves %}
+                                    <tr>
+                                        <td class="fw-bold text-uac-blue">
+                                            {{ item.eleve.nom }} {{ item.eleve.postnom }}<br>
+                                            <small class="text-muted">{{ item.eleve.matriculeEleve }}</small>
+                                        </td>
+                                        <td class="text-center fw-bold">{{ item.total_du|floatformat:2 }} $</td>
+                                        <td class="text-center text-success fw-bold">{{ item.total_paye|floatformat:2 }} $</td>
+                                        <td class="text-center text-danger fw-bold">
+                                            {% if item.reste_a_payer > 0 %}
+                                                {{ item.reste_a_payer|floatformat:2 }} $
+                                            {% else %}
+                                                <span class="badge bg-success px-2 py-1 rounded-pill">En règle</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="progress" style="height: 18px">
+                                                <div class="progress-bar {% if item.est_entierement_cote %}bg-success{% else %}bg-warning{% endif %}"
+                                                     role="progressbar" style="width: {{ item.pourcentage_cotes }}%;">
+                                                    <small style="font-size: 0.7rem; font-weight: bold;">{{ item.cotes_encodees }}/{{ item.cotes_attendues }}</small>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        {% if item.est_entierement_cote and item.en_regle %}
-                                            <span class="badge bg-success"><i class="fa-solid fa-check-double"></i> Prêt</span>
-                                        {% elif item.est_entierement_cote %}
-                                            <span class="badge bg-info text-dark"><i class="fa-solid fa-coins"></i> Cotes OK</span>
-                                        {% elif item.en_regle %}
-                                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-hourglass-half"></i> Cotes inc.</span>
-                                        {% else %}
-                                            <span class="badge bg-danger"><i class="fa-solid fa-exclamation"></i> À suivre</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="6" class="text-center text-muted py-4">Aucun élève inscrit.</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.est_entierement_cote and item.en_regle %}
+                                                <span class="badge bg-success">Prêt</span>
+                                            {% elif item.est_entierement_cote %}
+                                                <span class="badge bg-info text-dark">Cotes OK</span>
+                                            {% elif item.en_regle %}
+                                                <span class="badge bg-warning text-dark">Cotes inc.</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">À suivre</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun élève inscrit.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
                     <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
                         <span class="text-muted small">Suivi financier et pédagogique de la classe {{ classe.nomClasse }}</span>
                         <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalImpression">
@@ -405,6 +347,7 @@
                     </div>
                 </div>
 
+                <!-- MODAL D'IMPRESSION DES BULLETINS -->
                 <div class="modal fade" id="modalImpression" tabindex="-1">
                     <div class="modal-dialog">
                         <form method="POST" action="{% url 'imprimer_bulletins' classe.pk %}" target="_blank">
@@ -417,15 +360,10 @@
                                 <div class="modal-body">
                                     <p>Cochez les élèves ou laissez vide pour imprimer toute la classe :</p>
                                     {% for eleve in liste_eleves %}
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" 
-                                            name="eleves_selectionnes" 
-                                            value="{{ eleve.matriculeEleve }}" 
-                                            id="eleve{{ eleve.matriculeEleve }}">
-                                        <label class="form-check-label" for="eleve{{ eleve.matriculeEleve }}">
-                                            {{ eleve.nom }} {{ eleve.postnom }} ({{ eleve.matriculeEleve }})
-                                        </label>
-                                    </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="eleves_selectionnes" value="{{ eleve.matriculeEleve }}" id="eleve{{ eleve.matriculeEleve }}">
+                                            <label class="form-check-label" for="eleve{{ eleve.matriculeEleve }}">{{ eleve.nom }} {{ eleve.postnom }} ({{ eleve.matriculeEleve }})</label>
+                                        </div>
                                     {% endfor %}
                                 </div>
                                 <div class="modal-footer">
@@ -437,12 +375,12 @@
                 </div>
             </div>
 
-            <!-- 3. PANEL : ENSEIGNANTS ET COURS DE LA CLASSE -->
+            <!-- PANEL 3 : ENSEIGNANTS / COURS -->
             <div class="tab-pane fade" id="enseignants-panel" role="tabpanel" aria-labelledby="enseignants-tab">
                 <div class="card shadow-sm border-0">
                     <div class="card-header bg-white card-header-flex py-3 border-bottom">
                         <h5 class="card-title mb-0 text-uac-blue fw-bold">
-                            <i class="fa-solid fa-chalkboard-user me-2"></i> Enseignants et cours de la classe
+                            <i class="fa-solid fa-chalkboard-user me-2"></i> ENSEIGNANTS ET COURS DE LA CLASSE
                         </h5>
                         <span class="badge bg-uac-blue rounded-pill px-3 py-2">{{ attributions_classe|length }} Attribution(s)</span>
                     </div>
@@ -451,7 +389,7 @@
                             <table class="table table-hover table-striped align-middle mb-0">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th scope="col" style="width: 50px;" class="text-center bg-uac-blue">N°</th>
+                                        <th scope="col" style="width: 50px" class="text-center bg-uac-blue">N°</th>
                                         <th scope="col" class="bg-uac-blue">Enseignant</th>
                                         <th scope="col" class="bg-uac-blue">Grade</th>
                                         <th scope="col" class="bg-uac-blue">Cours enseigné</th>
@@ -464,29 +402,18 @@
                                         <td class="text-center"><strong>{{ forloop.counter }}</strong></td>
                                         <td class="fw-bold text-uac-blue">
                                             {% if attr.enseignant %}
-                                                {{ attr.enseignant.nom }} {{ attr.enseignant.postnom }} {{ attr.enseignant.prenom }}
-                                                <br><small class="text-muted">{{ attr.enseignant.matriculeEns }}</small>
+                                                {{ attr.enseignant.nom }} {{ attr.enseignant.postnom }} {{ attr.enseignant.prenom }}<br>
+                                                <small class="text-muted">{{ attr.enseignant.matriculeEns }}</small>
                                             {% else %}
                                                 <span class="badge bg-warning text-dark">Non attribué</span>
                                             {% endif %}
                                         </td>
-                                        <td>
-                                            {% if attr.enseignant %}
-                                                {{ attr.enseignant.grade }}
-                                            {% else %}
-                                                —
-                                            {% endif %}
-                                        </td>
+                                        <td>{% if attr.enseignant %}{{ attr.enseignant.grade }}{% else %}—{% endif %}</td>
                                         <td>{{ attr.cours.libelle }}</td>
                                         <td class="text-center"><code class="text-secondary">{{ attr.cours.code_cours }}</code></td>
                                     </tr>
                                     {% empty %}
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
-                                            <i class="fa-solid fa-book-open display-4 d-block mb-2"></i>
-                                            Aucun cours attribué à cette classe pour le moment.
-                                        </td>
-                                    </tr>
+                                    <tr><td colspan="5" class="text-center text-muted py-4">Aucun cours attribué à cette classe pour le moment.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -494,12 +421,16 @@
                     </div>
                 </div>
             </div>
-
         </div>
-
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Optionnel : forcer le rafraîchissement des tooltips ou autre
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tous les alertes bootstrap sont déjà gérés
+    });
+</script>
 </body>
 </html>
