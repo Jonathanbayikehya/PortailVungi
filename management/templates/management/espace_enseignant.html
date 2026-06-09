@@ -70,6 +70,12 @@
                 background: linear-gradient(135deg, var(--uac-blue), #004488);
                 color: white;
             }
+            /* AMÉLIORATION DE LA VISIBILITÉ DES TITRES */
+            .visible-title {
+                color: var(--uac-gold) !important;
+                text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+                font-weight: 700;
+            }
         </style>
     </head>
     <body>
@@ -82,9 +88,20 @@
                 <div class="ms-auto d-flex align-items-center">
                     <span class="text-white me-3 fw-bold hidden-sm"
                         ><i class="fas fa-user-circle me-1 text-warning"></i>
-                        Enseignant : {{ enseignant.nom|upper }} {{
-                        enseignant.prenom }}</span
-                    >
+                        Enseignant : 
+                        {% if enseignant.nom %}
+                            {{ enseignant.nom|upper }}
+                        {% endif %}
+                        {% if enseignant.prenom %}
+                            {{ enseignant.prenom }}
+                        {% else %}
+                            {% if enseignant.utilisateur %}
+                                {{ enseignant.utilisateur.first_name|default:"" }}
+                            {% else %}
+                                {{ request.user.first_name|default:"" }}
+                            {% endif %}
+                        {% endif %}
+                    </span>
                     <a
                         href="{% url 'logout' %}"
                         class="btn btn-sm btn-outline-light fw-bold px-3"
@@ -108,7 +125,8 @@
                                     ><i class="fas fa-star me-1"></i> Personnel
                                     Pédagogique</span
                                 >
-                                <h2 class="fw-bold mb-1">
+                                <!-- TITRE RENDU VISIBLE (JAUNE DORÉ) -->
+                                <h2 class="fw-bold mb-1 visible-title">
                                     Espace de Travail Individuel
                                 </h2>
                                 <p class="mb-0 opacity-75">
@@ -144,10 +162,19 @@
                             <label class="text-muted small d-block"
                                 >Nom complet</label
                             >
-                            <span class="fw-bold text-dark"
-                                >{{ enseignant.nom }} {{ enseignant.postnom }}
-                                {{ enseignant.prenom }}</span
-                            >
+                            <span class="fw-bold text-dark">
+                                {{ enseignant.nom|default:"" }} 
+                                {{ enseignant.postnom|default:"" }} 
+                                {% if enseignant.prenom %}
+                                    {{ enseignant.prenom }}
+                                {% else %}
+                                    {% if enseignant.utilisateur %}
+                                        {{ enseignant.utilisateur.first_name|default:"" }}
+                                    {% else %}
+                                        {{ request.user.first_name|default:"" }}
+                                    {% endif %}
+                                {% endif %}
+                            </span>
                         </div>
                         <div class="mb-3">
                             <label class="text-muted small d-block"
@@ -175,11 +202,10 @@
                 <div class="col-lg-8">
                     <div class="card card-custom">
                         <div class="card-header card-header-vungi p-3">
-                            <h5 class="fw-bold mb-0">
-                                <i
-                                    class="fas fa-book-open me-2 text-warning"
-                                ></i
-                                >Vos Charges d'Enseignement
+                            <!-- TITRE RENDU VISIBLE (JAUNE DORÉ) -->
+                            <h5 class="fw-bold mb-0 visible-title">
+                                <i class="fas fa-book-open me-2 text-warning"></i>
+                                Vos charges d'Enseignement
                             </h5>
                         </div>
                         <div class="card-body p-4">
@@ -264,9 +290,17 @@
                                     style="max-width: 500px"
                                 >
                                     Bonjour
-                                    <strong
-                                        >Prof. {{ enseignant.prenom }}</strong
-                                    >, votre compte d'accès est parfaitement
+                                    <strong>Prof. 
+                                        {% if enseignant.prenom %}
+                                            {{ enseignant.prenom }}
+                                        {% else %}
+                                            {% if enseignant.utilisateur %}
+                                                {{ enseignant.utilisateur.first_name|default:"cher enseignant" }}
+                                            {% else %}
+                                                {{ request.user.first_name|default:"cher enseignant" }}
+                                            {% endif %}
+                                        {% endif %}
+                                    </strong>, votre compte d'accès est parfaitement
                                     configuré, mais la Direction des Études ne
                                     vous a pas encore assigné de matières ou de
                                     classes pour cette période.
@@ -296,6 +330,6 @@
                 </div>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     </body>
 </html>

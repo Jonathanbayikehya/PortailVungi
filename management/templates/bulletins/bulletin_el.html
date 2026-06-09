@@ -4,18 +4,18 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Bulletin officiel</title>
+        <title>Bulletin officiel – 4e électricité</title>
         <style>
             @page {
                 size: A4 portrait;
-                margin: 4mm;                  /* encore réduit */
+                margin: 4mm;
             }
             * {
                 box-sizing: border-box;
             }
             body {
                 margin: 0;
-                background: #f2f2f2;
+                background: #e9ecef;
                 font-family: "Times New Roman", Georgia, serif;
                 color: #111;
             }
@@ -25,9 +25,10 @@
                 min-height: 297mm;
                 margin: 0 auto 12px auto;
                 background: #fff;
-                border: 1px solid #444;
-                padding: 3mm;                 /* réduit */
+                border: 1px solid #222;
+                padding: 3mm;
                 page-break-after: always;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             }
             .page:last-child {
                 page-break-after: auto;
@@ -125,6 +126,7 @@
                 font-size: 2.8mm;
                 padding: 0.6mm 1mm;
                 margin-bottom: 1mm;
+                background: #f5f0e6;
             }
             table.bulletin {
                 width: 100%;
@@ -134,47 +136,53 @@
             }
             .bulletin th,
             .bulletin td {
-                border: 1px solid #555;
+                border: 1px solid #444;
                 padding: 0.4mm 0.2mm;
                 text-align: center;
                 vertical-align: middle;
             }
             .bulletin th {
                 font-weight: 700;
+                background: #f1f3f5;
             }
             .bulletin .left {
                 text-align: left;
+                font-weight: 500;
             }
-            .bulletin .branches {
-                width: 20%;
+            .bulletin .branches-col {
+                width: 18%;
+            }
+            .bulletin .coef-col {
+                width: 7%;
             }
             .bulletin .max-col {
                 width: 4.5%;
             }
             .bulletin .note-col {
-                width: 4.5%;
+                width: 5%;
             }
             .bulletin .total-col {
-                width: 5.5%;
+                width: 6%;
             }
             .bulletin .general-col {
-                width: 5.5%;
+                width: 6%;
             }
             .bulletin .repechage-col {
-                width: 7%;
+                width: 8%;
             }
             .domain-row td {
                 font-weight: 700;
                 text-transform: uppercase;
                 text-align: left;
-                background: #f6f6f6;
+                background: #e9ecef;
             }
             .subtotal-row td {
                 font-weight: 700;
-                background: #faf6e8;
+                background: #fdf8e7;
             }
             .totaux-row td {
                 font-weight: 700;
+                background: #fcf4e0;
             }
             .meta-grid {
                 display: grid;
@@ -183,6 +191,7 @@
                 border-right: 1px solid #555;
                 border-bottom: 1px solid #555;
                 font-size: 2.3mm;
+                margin-top: 1mm;
             }
             .meta-grid .cell {
                 border-right: 1px solid #555;
@@ -205,7 +214,7 @@
             .footer-notes {
                 margin-top: 1.5mm;
                 font-size: 2.3mm;
-                line-height: 1.1;
+                line-height: 1.15;
             }
             .signature-row {
                 display: grid;
@@ -224,6 +233,11 @@
                 font-size: 2.1mm;
                 color: #444;
             }
+            .option-badge {
+                font-style: italic;
+                font-weight: bold;
+                color: #b45116;
+            }
         </style>
     </head>
     <body>
@@ -231,23 +245,13 @@
         <div class="page">
             <div class="top-box">
                 <div class="header-top">
-                    <img
-                        src="{% static 'management/drapeau-rdc.jpg' %}"
-                        alt="Drapeau RDC"
-                        class="header-image"
-                    />
+                    <img src="{% static 'management/drapeau-rdc.jpg' %}" alt="Drapeau RDC" class="header-image" />
                     <div class="header-title">
                         <div class="main">République Démocratique du Congo</div>
-                        <div class="sub">
-                            Ministère de l'Éducation Nationale
-                        </div>
+                        <div class="sub">Ministère de l'Éducation Nationale</div>
                         <div class="sub">et Nouvelle Citoyenneté</div>
                     </div>
-                    <img
-                        src="{% static 'management/armoirie-rdc.png' %}"
-                        alt="Armoirie RDC"
-                        class="armoirie"
-                    />
+                    <img src="{% static 'management/armoirie-rdc.png' %}" alt="Armoirie RDC" class="armoirie" />
                 </div>
                 <div class="id-row">
                     <div><strong>N° ID.</strong></div>
@@ -261,91 +265,51 @@
 
             <div class="info-grid">
                 <div>
-                    <div class="info-line">
-                        <span class="label">Province éducationnelle :</span
-                        ><span class="value">Nord-kivu II</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Ville :</span
-                        ><span class="value">Butembo</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Commune / Territoire :</span
-                        ><span class="value">Mususa</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">École :</span
-                        ><span class="value">Institut Vungi</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Code :</span
-                        ><span class="value">6-62497183</span>
-                    </div>
+                    <div class="info-line"><span class="label">Province éducationnelle :</span>Nord-kivu II<span class="value"></span></div>
+                    <div class="info-line"><span class="label">Ville :</span><span class="value">Butembo</span></div>
+                    <div class="info-line"><span class="label">Commune / Territoire :</span>Mususa<span class="value"></span></div>
+                    <div class="info-line"><span class="label">École :</span><span class="value">Institut Vungi</span></div>
+                    <div class="info-line"><span class="label">Code :</span><span class="value">6-62497183</span></div>
                 </div>
                 <div>
                     {% if b.eleve %}
-                    <div class="info-line">
-                        <span class="label">Élève :</span
-                        ><span class="value"
-                            >{{ b.eleve.nom|default_if_none:"" }} {{ b.eleve.postnom|default_if_none:"" }} {{ b.eleve.prenom|default_if_none:"" }}</span
-                        >
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Né(e) à :</span
-                        ><span class="value">{{ b.eleve.lieu_naissance|default_if_none:"" }}</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Le :</span
-                        ><span class="value"
-                            >{% if b.eleve.date_naissance %}{{ b.eleve.date_naissance|date:'d/m/Y' }}{% endif %}</span
-                        >
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Classe :</span
-                        ><span class="value">{{ classe.nomClasse }}</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">N° perm. :</span
-                        ><span class="value">{{ b.eleve.matriculeEleve|default_if_none:"" }}</span>
-                    </div>
-                    <div class="info-line">
-                        <span class="label">Sexe :</span
-                        ><span class="value">{{ b.eleve.sexe|default_if_none:"" }}</span>
-                    </div>
+                    <div class="info-line"><span class="label">Élève :</span><span class="value">{{ b.eleve.nom|default_if_none:"" }} {{ b.eleve.postnom|default_if_none:"" }} {{ b.eleve.prenom|default_if_none:"" }}</span></div>
+                    <div class="info-line"><span class="label">Né(e) à :</span><span class="value">{{ b.eleve.lieu_naissance|default_if_none:"" }}</span></div>
+                    <div class="info-line"><span class="label">Le :</span><span class="value">{% if b.eleve.date_naissance %}{{ b.eleve.date_naissance|date:'d/m/Y' }}{% endif %}</span></div>
+                    <div class="info-line"><span class="label">Classe :</span><span class="value">{{ classe.nomClasse }} <span class="option-badge">(Section Électricité)</span></span></div>
+                    <div class="info-line"><span class="label">N° perm. :</span><span class="value">{{ b.eleve.matriculeEleve|default_if_none:"" }}</span></div>
+                    <div class="info-line"><span class="label">Sexe :</span><span class="value">{{ b.eleve.sexe|default_if_none:"" }}</span></div>
                     {% else %}
-                    <div class="info-line">
-                        <span class="label">Élève :</span><span class="value">Données indisponibles</span>
-                    </div>
+                    <div class="info-line"><span class="label">Élève :</span><span class="value">Données indisponibles</span></div>
                     {% endif %}
                 </div>
             </div>
 
             <div class="title-band">
-                {{ bulletin_title }} — Année scolaire {{ annee_scolaire }}
+                {{ bulletin_title|default:"BULLETIN DE NOTES – 4E ÉLECTRICITÉ" }} — Année scolaire {{ annee_scolaire }}
             </div>
 
             <table class="bulletin">
                 <thead>
                     <tr>
-                        <th rowspan="3" class="branches">Branches</th>
-                        <th colspan="6">Premier semestre</th>
-                        <th colspan="6">Second semestre</th>
-                        <th rowspan="3" class="general-col">Total général</th>
-                        <th rowspan="3" class="repechage-col">
-                            Examen de repêchage
-                        </th>
+                        <th rowspan="3" class="branches-col">BRANCHES / DISCIPLINES</th>
+                        <th rowspan="3" class="coef-col">COEF.</th>
+                        <th colspan="6">PREMIER SEMESTRE</th>
+                        <th colspan="6">SECOND SEMESTRE</th>
+                        <th rowspan="3" class="general-col">TOTAL GÉNÉRAL</th>
+                        <th rowspan="3" class="repechage-col">EXAMEN DE REPÊCHAGE</th>
                     </tr>
                     <tr>
-                        <th rowspan="2" class="max-col">Max.</th>
-                        <th colspan="2">Travaux journaliers</th>
-                        <th rowspan="2" class="max-col">Max exam.</th>
-                        <th rowspan="2" class="note-col">Examen1</th>
-                        <th rowspan="2" class="total-col">Total</th>
-                        <th rowspan="2" class="max-col">Max.</th>
-                        <th colspan="2">Travaux journaliers</th>
-                        <th rowspan="2" class="max-col">Max exam.</th>
-                        <th rowspan="2" class="note-col">Examen2</th>
-                        <th rowspan="2" class="total-col">Total</th>
+                        <th rowspan="2" class="max-col">MAX</th>
+                        <th colspan="2">TRAVAUX JOURNALIERS</th>
+                        <th rowspan="2" class="max-col">MAX EXAM.</th>
+                        <th rowspan="2" class="note-col">EXAMEN 1</th>
+                        <th rowspan="2" class="total-col">TOTAL</th>
+                        <th rowspan="2" class="max-col">MAX</th>
+                        <th colspan="2">TRAVAUX JOURNALIERS</th>
+                        <th rowspan="2" class="max-col">MAX EXAM.</th>
+                        <th rowspan="2" class="note-col">EXAMEN 2</th>
+                        <th rowspan="2" class="total-col">TOTAL</th>
                     </tr>
                     <tr>
                         <th class="note-col">1<sup>ère</sup> P</th>
@@ -358,11 +322,12 @@
                     {% for ligne in b.lignes %}
                         {% if ligne.type == 'domaine' %}
                             <tr class="domain-row">
-                                <td colspan="15">{{ ligne.label }}</td>
+                                <td colspan="16" class="left"><strong>{{ ligne.label }}</strong></td>
                             </tr>
                         {% elif ligne.type == 'cours' %}
                             <tr>
                                 <td class="left">{{ ligne.label }}</td>
+                                <td>{% if ligne.coef %}{{ ligne.coef|floatformat:0 }}{% else %}1{% endif %}</td>
                                 <!-- Premier semestre -->
                                 <td>{{ ligne.max_p|floatformat:0 }}</td>
                                 <td>{% if ligne.p1 is not None %}{{ ligne.p1|floatformat:-1 }}{% else %}-{% endif %}</td>
@@ -377,13 +342,13 @@
                                 <td>{{ ligne.max_ex|floatformat:0 }}</td>
                                 <td>{% if ligne.exam2 is not None %}{{ ligne.exam2|floatformat:-1 }}{% else %}-{% endif %}</td>
                                 <td>{{ ligne.s2_points|floatformat:-1 }}</td>
-                                <!-- Total & repêchage -->
                                 <td>{{ ligne.total_points|floatformat:-1 }}</td>
                                 <td>{% if ligne.ex1 is not None or ligne.ex2 is not None %}{{ ligne.ex1_points|floatformat:-1 }} / {{ ligne.ex2_points|floatformat:-1 }}{% else %}-{% endif %}</td>
                             </tr>
                         {% elif ligne.type == 'subtotal' %}
                             <tr class="subtotal-row">
                                 <td class="left">{{ ligne.label }}</td>
+                                <td>{% if ligne.coef_sum %}{{ ligne.coef_sum|floatformat:0 }}{% else %}Σ{% endif %}</td>
                                 <td>{{ ligne.max_p|floatformat:0 }}</td>
                                 <td>{{ ligne.p1_points|floatformat:-1 }}</td>
                                 <td>{{ ligne.p2_points|floatformat:-1 }}</td>
@@ -401,44 +366,56 @@
                             </tr>
                         {% endif %}
                     {% endfor %}
+
+                    <!-- Lignes récapitulatives -->
                     <tr class="totaux-row">
                         <td class="left">Maxima généraux</td>
+                        <td>—</td>
                         <td colspan="6">{{ b.total_s1_max|floatformat:0 }}</td>
                         <td colspan="6">{{ b.total_s2_max|floatformat:0 }}</td>
                         <td>{{ b.total_max|floatformat:0 }}</td>
-                        <td></td>
+                        <td>—</td>
                     </tr>
                     <tr class="totaux-row">
-                        <td class="left">Totaux</td>
+                        <td class="left">Totaux bruts</td>
+                        <td>—</td>
                         <td colspan="6">{{ b.total_s1_points|floatformat:-1 }}</td>
                         <td colspan="6">{{ b.total_s2_points|floatformat:-1 }}</td>
                         <td>{{ b.total_points|floatformat:-1 }}</td>
-                        <td></td>
+                        <td>—</td>
                     </tr>
                     <tr class="totaux-row">
-                        <td class="left">Pourcentage</td>
-                        <td colspan="6">{% if b.pct_s1 is not None %}{{ b.pct_s1|floatformat:1 }}%{% endif %}</td>
-                        <td colspan="6">{% if b.pct_s2 is not None %}{{ b.pct_s2|floatformat:1 }}%{% endif %}</td>
-                        <td>{{ b.moy_general }}</td>
-                        <td></td>
+                        <td class="left">Pourcentage / semestre</td>
+                        <td>—</td>
+                        <td colspan="6">{% if b.pct_s1 is not None %}{{ b.pct_s1|floatformat:1 }}%{% else %}-{% endif %}</td>
+                        <td colspan="6">{% if b.pct_s2 is not None %}{{ b.pct_s2|floatformat:1 }}%{% else %}-{% endif %}</td>
+                        <td>{{ b.moy_general|default:"-" }}</td>
+                        <td>—</td>
                     </tr>
-                    <!-- Nouvelle ligne : pourcentage par période -->
                     <tr class="totaux-row">
-                        <td class="left">% par période</td>
-                        <td></td>
+                        <td class="left">Moyenne pondérée (avec coef)</td>
+                        <td>—</td>
+                        <td colspan="6">{% if b.moy_ponderee_s1 %}{{ b.moy_ponderee_s1|floatformat:1 }}%{% else %}-{% endif %}</td>
+                        <td colspan="6">{% if b.moy_ponderee_s2 %}{{ b.moy_ponderee_s2|floatformat:1 }}%{% else %}-{% endif %}</td>
+                        <td>{% if b.moy_general_ponderee %}{{ b.moy_general_ponderee|floatformat:1 }}%{% else %}{{ b.moy_general }}{% endif %}</td>
+                        <td>—</td>
+                    </tr>
+                    <tr class="totaux-row">
+                        <td class="left">% par période (P1 → P4)</td>
+                        <td>—</td>
+                        <td>—</td>
                         <td>{% if b.pct_p1 is not None %}{{ b.pct_p1|floatformat:1 }}%{% else %}-{% endif %}</td>
                         <td>{% if b.pct_p2 is not None %}{{ b.pct_p2|floatformat:1 }}%{% else %}-{% endif %}</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
                         <td>{% if b.pct_p3 is not None %}{{ b.pct_p3|floatformat:1 }}%{% else %}-{% endif %}</td>
                         <td>{% if b.pct_p4 is not None %}{{ b.pct_p4|floatformat:1 }}%{% else %}-{% endif %}</td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
                     </tr>
                 </tbody>
             </table>
@@ -447,47 +424,33 @@
                 <div class="cell label">Place / Nbre d'élèves</div>
                 <div class="cell wide">{{ b.rang }} / {{ b.effectif }}</div>
                 <div class="cell label">Application</div>
-                <div class="cell wide"></div>
+                <div class="cell wide">{{ b.application|default:"................." }}</div>
                 <div class="cell label">Conduite</div>
-                <div class="cell wide"></div>
+                <div class="cell wide">{{ b.conduite|default:"................." }}</div>
                 <div class="cell label">Signature</div>
                 <div class="cell wide"></div>
             </div>
 
             <div class="footer-notes">
-                <div>
-                    - L'élève ne pourra passer dans la classe supérieure s'il
-                    n'a subi avec succès un examen de repêchage en
-                    ............................................................
-                    (1)
-                </div>
-                <div>- L'élève passe dans la classe supérieure (1)</div>
-                <div>- L'élève double la classe (1)</div>
-                <br />
-                <div>(1) Biffer la mention inutile.</div>
-                <div>
-                    <strong>Décision du jury :</strong> {{ b.decision_jury|default:'................................' }}
-                </div>
-                <div>
-                    <strong>Appréciation générale :</strong> {{ b.apprec_general|default:'................................' }}
-                </div>
-                <div>
-                    <strong>Note importante :</strong> Le bulletin est sans
-                    valeur s'il est raturé ou surchargé.
-                </div>
+                <div>- L'élève ne pourra passer dans la classe supérieure s'il n'a subi avec succès un examen de repêchage en .................................................................... (1)</div>
+                <div>- L'élève passe dans la classe supérieure (1) &nbsp;&nbsp; - L'élève double la classe (1)</div>
+                <div><em>(1) Biffer la mention inutile.</em></div>
+                <div><strong>Décision du jury (électricité) :</strong> {{ b.decision_jury|default:'................................' }}</div>
+                <div><strong>Appréciation générale :</strong> {{ b.apprec_general|default:'................................' }}</div>
+                <div><strong>Moyenne de la section :</strong> {{ b.moy_section|default:'....../20' }} &nbsp;|&nbsp; <strong>Moyenne de la classe :</strong> {{ b.moy_classe|default:'....../20' }}</div>
+                <div><strong>Note importante :</strong> Le bulletin est sans valeur s'il est raturé ou surchargé. Les coefficients sont conformes au programme de la 4<sup>e</sup> électricité.</div>
             </div>
 
             <div class="signature-row">
                 <div class="signature-box">Signature de l'élève</div>
                 <div class="signature-box">Sceau de l'École</div>
                 <div class="signature-box">
-                    Fait à ................................, le ...... / ......
-                    / 20......<br /><br />Chef d'Établissement,<br /><br />Noms
-                    et Signature
+                    Fait à ................................, le ...... / ...... / 20......<br /><br />
+                    Chef d'Établissement,<br /><br />
+                    Noms et Signature
                 </div>
             </div>
-
-            <div class="legal">IGE/P.S./007</div>
+            <div class="legal">IGE/P.S./007 – Bulletin 4e électricité</div>
         </div>
         {% endfor %}
     </body>

@@ -660,53 +660,53 @@ def encoder_notes(request, cours_id):
     classe_id = request.GET.get('classe_id')
     classe_selectionnee = None
 
-    # Vérification des droits
     if classe_id:
         classe_selectionnee = get_object_or_404(Classe, pk=classe_id)
+        # Vérifie que l'enseignant a bien cette classe pour ce cours
         get_object_or_404(Attribution, enseignant=enseignant_connecte, cours=cours_obj, classe=classe_selectionnee)
     else:
         attributions = Attribution.objects.filter(enseignant=enseignant_connecte, cours=cours_obj)
         if not attributions.exists():
-            return render(request, 'management/erreur_profil.html', {'message': "Vous n'êtes pas autorisé à accéder à ce cours."})
+            return render(request, 'management/erreur_profil.html', 
+                          {'message': "Vous n'êtes pas autorisé à accéder à ce cours."})
 
-    # Périodes et barèmes
+    # Toutes les périodes (pour l'affichage)
     periodes_bdd = Periode.objects.all().order_by('idPeriode')
-    try:
-        max_p = cours_obj.max.maxima if cours_obj.max else 10.0
-    except:
-        max_p = 10.0
+    # Dictionnaire des périodes actives : clé en MAJUSCULE pour faciliter la recherche
+    periodes_actives = {p.code.upper(): p for p in periodes_bdd if p.statut == 'ACTIVE'}
+
+    # Valeurs par défaut pour les notes max
+    max_p = getattr(cours_obj.max, 'maxima', 10.0) if cours_obj.max else 10.0
     max_ex = max_p * 2
 
-    # Récupération des élèves et de leurs notes existantes
     eleves_avec_cotes = []
     if classe_selectionnee:
         eleves = Eleve.objects.filter(classe=classe_selectionnee).order_by('nom', 'postnom')
         for eleve in eleves:
             cotes_dict = {}
             for periode in periodes_bdd:
+                # Récupère ou crée la note (None par défaut)
                 cote_obj, _ = Cotes.objects.get_or_create(eleve=eleve, cours=cours_obj, periode=periode)
-                cotes_dict[periode.code] = cote_obj   # objet Cotes complet
+                # Stocke avec la clé en MAJUSCULE (P1, EX1, etc.)
+                cotes_dict[periode.code.upper()] = cote_obj
             eleves_avec_cotes.append({'eleve': eleve, 'cotes': cotes_dict})
 
-    # Traitement POST (enregistrement)
+    # Traitement du formulaire
     if request.method == 'POST' and classe_selectionnee:
-        periodes_actives = {p.code: p for p in periodes_bdd if p.statut == 'ACTIVE'}
-        if not periodes_actives:
-            messages.warning(request, "Aucune période active. L'encodage est verrouillé.")
-            return redirect(f"{request.path}?classe_id={classe_id}")
-
         erreurs = []
         sauvegarde_effectuee = False
 
         for item in eleves_avec_cotes:
             eleve = item['eleve']
-            for code, cote_obj in item['cotes'].items():
+            for code, cote_obj in item['cotes'].items():  # code = 'P1', 'EX1', ...
+                # Vérifie si la période est active (clé en majuscule)
                 if code not in periodes_actives:
                     continue
-                input_name = f"{code.lower()}_{eleve.pk}"
+
+                input_name = f"{code.lower()}_{eleve.pk}"  # ex: p1_123
                 valeur = request.POST.get(input_name)
 
-                max_note = max_ex if 'EX' in code.upper() else max_p
+                max_note = max_ex if 'EX' in code else max_p
 
                 if valeur is None or valeur.strip() == '':
                     if cote_obj.note is not None:
@@ -715,16 +715,16 @@ def encoder_notes(request, cours_id):
                         sauvegarde_effectuee = True
                 else:
                     try:
-                        note = float(valeur)
+                        note = float(valeur.replace(',', '.'))
                         if 0 <= note <= max_note:
                             if cote_obj.note != note:
                                 cote_obj.note = note
                                 cote_obj.save(update_fields=['note'])
                                 sauvegarde_effectuee = True
                         else:
-                            erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : note {note} hors limites [0-{max_note}]")
+                            erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : {note} hors limites (0-{max_note})")
                     except ValueError:
-                        erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : '{valeur}' n'est pas un nombre valide.")
+                        erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : '{valeur}' invalide")
 
         for err in erreurs:
             messages.error(request, err)
@@ -735,7 +735,6 @@ def encoder_notes(request, cours_id):
 
         return redirect(f"{request.path}?classe_id={classe_id}")
 
-    # Classes concernées pour la sélection
     classes_concernees = [attr.classe for attr in Attribution.objects.filter(enseignant=enseignant_connecte, cours=cours_obj)]
 
     context = {
