@@ -1,3 +1,4 @@
+{% load dict_extras %}
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -16,6 +17,8 @@
         .bg-semestre-1 { background-color: #eef7ff !important; color: #003366 !important; }
         .bg-semestre-2 { background-color: #fffbe6 !important; color: #b78103 !important; }
         input:read-only { background-color: #e9ecef !important; cursor: not-allowed; opacity: 0.75; }
+        .small-verrou { font-size: 0.65rem; margin-top: 4px; color: #dc3545; font-weight: 500; }
+        .debug-keys { font-size: 0.65rem; color: #6c757d; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -100,85 +103,93 @@
                             <tr>
                                 <td class="text-center text-muted font-monospace small">{{ forloop.counter }}</td>
                                 <td class="text-center font-monospace fw-bold text-secondary small">{{ item.eleve.matriculeEleve }}</td>
-                                <td class="text-start"><strong class="text-uppercase">{{ item.eleve.nom }}</strong> {{ item.eleve.postnom }} {{ item.eleve.prenom }}</td>
+                                <td class="text-start">
+                                    <strong class="text-uppercase text-uac">{{ item.eleve.nom }}</strong> {{ item.eleve.postnom }} {{ item.eleve.prenom }}
+                                </td>
                                 <td class="text-center"><span class="badge {% if item.eleve.sexe == 'M' %}bg-primary{% else %}bg-danger{% endif %}">{{ item.eleve.sexe }}</span></td>
 
                                 <!-- P1 -->
                                 <td class="bg-semestre-1">
-                                    <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="p1_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.P1.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.P1.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"P1" %}
+                                        <input type="number" name="p1_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_p }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
 
                                 <!-- P2 -->
                                 <td class="bg-semestre-1">
-                                    <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="p2_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.P2.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.P2.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"P2" %}
+                                        <input type="number" name="p2_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_p }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
 
                                 <!-- EX1 -->
                                 <td class="bg-semestre-1">
-                                   <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="ex1_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.EX1.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.EX1.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"EX1" %}
+                                        <input type="number" name="ex1_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_ex }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
 
                                 <!-- P3 -->
                                 <td class="bg-semestre-2">
-                                    <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="p3_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.P3.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.P3.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"P3" %}
+                                        <input type="number" name="p3_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_p }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
 
                                 <!-- P4 -->
                                 <td class="bg-semestre-2">
-                                    <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="p4_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.P4.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.P4.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"P4" %}
+                                        <input type="number" name="p4_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_p }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
 
                                 <!-- EX2 -->
                                 <td class="bg-semestre-2">
-                                    <!-- À l'intérieur de chaque <td> pour P1 par exemple -->
-                                    <input type="number" name="ex2_{{ item.eleve.pk }}"
-                                        value="{{ item.cotes.EX2.note|default:'' }}"
-                                        class="form-control form-control-sm input-cote mx-auto border-primary"
-                                        min="0" max="{{ max_p }}" step="0.5"
-                                        {% if item.cotes.P1.periode.statut != 'ACTIVE' %}readonly{% endif %}>
-                                    {% if item.cotes.EX2.periode.statut != 'ACTIVE' %}
-                                        <small class="text-muted d-block">(verrouillé)</small>
-                                    {% endif %}
+                                    {% with cote=item.cotes|get_item:"EX2" %}
+                                        <input type="number" name="ex2_{{ item.eleve.pk }}"
+                                               value="{{ cote.note|default_if_none:''|stringformat:'g' }}"
+                                               class="form-control form-control-sm input-cote mx-auto {% if cote.periode.statut == 'ACTIVE' %}border-primary{% else %}bg-light text-muted{% endif %}"
+                                               min="0" max="{{ max_ex }}" step="0.5"
+                                               {% if not cote or cote.periode.statut != 'ACTIVE' %}readonly{% endif %}>
+                                        {% if not cote or cote.periode.statut != 'ACTIVE' %}
+                                            <div class="small-verrou"><i class="fas fa-lock me-1"></i>verrouillé</div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
                             </tr>
                             {% empty %}
@@ -210,15 +221,48 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll('.input-cote').forEach(input => {
+        const inputs = document.querySelectorAll('.input-cote');
+        
+        inputs.forEach(input => {
             if (input.readOnly) return;
-            input.addEventListener('change', function() {
+            
+            let lastValidValue = input.value;
+            // Créer un conteneur pour le message d'erreur (s'il n'existe pas déjà)
+            let errorDiv = document.createElement('div');
+            errorDiv.className = 'text-danger small mt-1';
+            errorDiv.style.fontSize = '0.7rem';
+            input.parentNode.insertBefore(errorDiv, input.nextSibling);
+            
+            input.addEventListener('input', function() {
                 let max = parseFloat(this.max);
                 let min = parseFloat(this.min);
-                let val = parseFloat(this.value);
-                if (!isNaN(val)) {
-                    if (val > max) this.value = max;
-                    if (val < min) this.value = min;
+                let rawValue = this.value;
+                
+                // Effacer le message précédent
+                errorDiv.textContent = '';
+                
+                if (rawValue === '') {
+                    lastValidValue = '';
+                    return;
+                }
+                
+                let val = parseFloat(rawValue);
+                if (isNaN(val)) {
+                    this.value = lastValidValue;
+                    return;
+                }
+                
+                if (val > max) {
+                    errorDiv.textContent = `⚠️ Note trop élevée (max ${max})`;
+                    this.value = lastValidValue;
+                } 
+                else if (val < min) {
+                    errorDiv.textContent = `⚠️ Note trop basse (min ${min})`;
+                    this.value = lastValidValue;
+                }
+                else {
+                    lastValidValue = this.value;
+                    errorDiv.textContent = '';
                 }
             });
         });

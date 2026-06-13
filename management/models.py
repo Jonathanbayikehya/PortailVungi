@@ -30,6 +30,7 @@ class Enseignant(models.Model):
     postnom = models.CharField(max_length=50)
     prenom = models.CharField(max_length=50)
     grade = models.CharField(max_length=50)
+    telephone = models.CharField(max_length=15)
     
     # Liaison One-to-One avec le compte de connexion Django
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='enseignant_profile')

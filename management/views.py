@@ -1,6 +1,3 @@
-from django import template
-
-register = template.Library()
 from collections import defaultdict
 from types import SimpleNamespace
 
@@ -651,7 +648,6 @@ def espace_enseignant(request):
             "enseignant": enseignant_connecte,
         },
     )
-
 @enseignant_required
 def encoder_notes(request, cours_id):
     enseignant_connecte = get_object_or_404(Enseignant, user=request.user)
@@ -662,7 +658,6 @@ def encoder_notes(request, cours_id):
 
     if classe_id:
         classe_selectionnee = get_object_or_404(Classe, pk=classe_id)
-        # Vérifie que l'enseignant a bien cette classe pour ce cours
         get_object_or_404(Attribution, enseignant=enseignant_connecte, cours=cours_obj, classe=classe_selectionnee)
     else:
         attributions = Attribution.objects.filter(enseignant=enseignant_connecte, cours=cours_obj)
@@ -670,12 +665,9 @@ def encoder_notes(request, cours_id):
             return render(request, 'management/erreur_profil.html', 
                           {'message': "Vous n'êtes pas autorisé à accéder à ce cours."})
 
-    # Toutes les périodes (pour l'affichage)
     periodes_bdd = Periode.objects.all().order_by('idPeriode')
-    # Dictionnaire des périodes actives : clé en MAJUSCULE pour faciliter la recherche
     periodes_actives = {p.code.upper(): p for p in periodes_bdd if p.statut == 'ACTIVE'}
 
-    # Valeurs par défaut pour les notes max
     max_p = getattr(cours_obj.max, 'maxima', 10.0) if cours_obj.max else 10.0
     max_ex = max_p * 2
 
@@ -685,29 +677,25 @@ def encoder_notes(request, cours_id):
         for eleve in eleves:
             cotes_dict = {}
             for periode in periodes_bdd:
-                # Récupère ou crée la note (None par défaut)
                 cote_obj, _ = Cotes.objects.get_or_create(eleve=eleve, cours=cours_obj, periode=periode)
-                # Stocke avec la clé en MAJUSCULE (P1, EX1, etc.)
-                cotes_dict[periode.code.upper()] = cote_obj
+                # Clé normalisée en majuscule
+                key = periode.code.upper()
+                cotes_dict[key] = cote_obj
             eleves_avec_cotes.append({'eleve': eleve, 'cotes': cotes_dict})
 
-    # Traitement du formulaire
     if request.method == 'POST' and classe_selectionnee:
+        # ... (votre code POST est déjà correct, je le garde identique)
         erreurs = []
         sauvegarde_effectuee = False
 
         for item in eleves_avec_cotes:
             eleve = item['eleve']
-            for code, cote_obj in item['cotes'].items():  # code = 'P1', 'EX1', ...
-                # Vérifie si la période est active (clé en majuscule)
+            for code, cote_obj in item['cotes'].items():
                 if code not in periodes_actives:
                     continue
-
-                input_name = f"{code.lower()}_{eleve.pk}"  # ex: p1_123
+                input_name = f"{code.lower()}_{eleve.pk}"
                 valeur = request.POST.get(input_name)
-
                 max_note = max_ex if 'EX' in code else max_p
-
                 if valeur is None or valeur.strip() == '':
                     if cote_obj.note is not None:
                         cote_obj.note = None
@@ -725,14 +713,12 @@ def encoder_notes(request, cours_id):
                             erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : {note} hors limites (0-{max_note})")
                     except ValueError:
                         erreurs.append(f"{eleve.nom} {eleve.postnom} - {code} : '{valeur}' invalide")
-
         for err in erreurs:
             messages.error(request, err)
         if sauvegarde_effectuee and not erreurs:
             messages.success(request, "Notes enregistrées avec succès.")
         elif not sauvegarde_effectuee and not erreurs:
             messages.info(request, "Aucune modification détectée.")
-
         return redirect(f"{request.path}?classe_id={classe_id}")
 
     classes_concernees = [attr.classe for attr in Attribution.objects.filter(enseignant=enseignant_connecte, cours=cours_obj)]
@@ -748,9 +734,6 @@ def encoder_notes(request, cours_id):
     }
     return render(request, 'management/fiche_cote.html', context)
 
-@register.filter
-def get_item(dictionary, key):
-    return dictionary.get(key)
 @titulaire_required
 def imprimer_bulletins(request, classe_id):
     """

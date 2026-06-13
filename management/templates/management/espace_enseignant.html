@@ -142,8 +142,13 @@
                                     <i class="fas fa-calendar-alt me-1"></i>
                                     Année Scolaire
                                 </div>
-                                <div class="fw-bold fs-4 text-warning">
-                                    {{ annee_scolaire }}
+                                <!-- AFFICHAGE DE L'ANNÉE SCOLAIRE EN COURS -->
+                                <div class="fw-bold fs-4 text-warning" id="school-year-display">
+                                    {% if annee_scolaire %}
+                                        {{ annee_scolaire }}
+                                    {% else %}
+                                        Chargement...
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -330,6 +335,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- Script pour afficher l'année scolaire en cours si la variable serveur est absente -->
+        <script>
+            function getCurrentSchoolYear() {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth(); // 0 = janvier, 8 = septembre
+                // L'année scolaire commence en septembre
+                if (currentMonth >= 8) {
+                    return `${currentYear}-${currentYear + 1}`;
+                } else {
+                    return `${currentYear - 1}-${currentYear}`;
+                }
+            }
+
+            const displayElement = document.getElementById('school-year-display');
+            if (displayElement) {
+                const serverValue = "{{ annee_scolaire|default:'' }}";
+                // Si la variable serveur est vide ou n'est pas une année valide, on utilise le calcul JS
+                if (!serverValue || serverValue.trim() === '' || serverValue === 'None') {
+                    displayElement.textContent = getCurrentSchoolYear();
+                } else {
+                    // Conserver la valeur envoyée par le serveur
+                    displayElement.textContent = serverValue;
+                }
+            }
+        </script>
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
     </body>
 </html>
