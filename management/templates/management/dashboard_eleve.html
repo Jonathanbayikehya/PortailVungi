@@ -178,34 +178,50 @@
                 <p class="mb-0">Le proviseur n'a pas encore autorisé la publication des résultats. Revenez consulter cette page ultérieurement.</p>
             </div>
             {% endif %}
-
-            {% if resultats_publies and decision_jury and decision_jury.decision != 'EN_ATTENTE' %}
-            <div class="alert alert-primary border-start border-primary border-5 shadow-sm mb-4">
-                <h5 class="fw-bold mb-1"><i class="fas fa-gavel me-2"></i>Décision du Jury</h5>
-                <p class="mb-0 fs-5 fw-bold text-uac">{{ decision_jury.get_decision_display }}</p>
-                {% if decision_jury.commentaire %}<p class="mb-0 mt-1 small text-muted"><em>{{ decision_jury.commentaire }}</em></p>{% endif %}
-            </div>
-            {% elif resultats_publies %}
-            <div class="alert alert-secondary mb-4 small"><i class="fas fa-hourglass-half me-2"></i>Décision du jury : en attente de délibération.</div>
-            {% endif %}
             
             <!-- Premier Semestre -->
             <div class="portal-card mb-4">
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-calendar-alt fa-2x me-3 text-primary"></i>
-                        <h4 class="mb-0 fw-bold text-uac">PREMIER SEMESTRE (P1, P2, EX1)</h4>
+                        <div>
+                            <h4 class="mb-0 fw-bold text-uac">PREMIER SEMESTRE</h4>
+                            <div class="mt-1 d-flex gap-2">
+                                <span class="badge {% if p_stats.P1.complet %}bg-info{% else %}bg-light text-muted border{% endif %}">P1: {% if p_stats.P1.complet %}{{ p_stats.P1.pct }}%{% else %}encours{% endif %}</span>
+                                <span class="badge {% if p_stats.P2.complet %}bg-info{% else %}bg-light text-muted border{% endif %}">P2: {% if p_stats.P2.complet %}{{ p_stats.P2.pct }}%{% else %}encours{% endif %}</span>
+                                <span class="badge {% if p_stats.EX1.complet %}bg-warning text-dark{% else %}bg-light text-muted border{% endif %}">EX1: {% if p_stats.EX1.complet %}{{ p_stats.EX1.pct }}%{% else %}encours{% endif %}</span>
+                            </div>
+                        </div>
                     </div>
-                    {% if resultats_publies and moy_s1_pct is not None and autorise_ex1 %}
-                    <div class="text-end p-3 rounded bg-light border">
-                        <small class="text-muted d-block">Moyenne générale S1</small>
-                        <span class="fs-3 fw-bold text-uac">{{ moy_s1_pct }}%</span>
-                        <small class="text-muted d-block">({{ moy_s1_pts }} / {{ moy_s1_max }} pts)</small>
+                    <div class="d-flex align-items-center gap-3">
+                        {% if resultats_publies and decision_jury and decision_jury.decision != 'EN_ATTENTE' %}
+                        <div class="text-end">
+                            <span class="badge {% if decision_jury.decision == 'ADMIS' %}bg-success{% else %}bg-primary{% endif %} fs-6 px-3 shadow-sm">{{ decision_jury.get_decision_display }}</span>
+                            {% if decision_jury.decision == 'ADMIS' %}
+                                <div class="text-success small fw-bold mt-1"><i class="fas fa-award me-1"></i> Félicitations pour votre réussite !</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        {% if resultats_publies and moy_s1_max > 0 %}
+                        <div class="text-end p-2 px-3 rounded bg-info bg-opacity-10 border-start border-primary border-4 shadow-sm">
+                            <small class="text-muted d-block fw-bold" style="font-size: 0.7rem;">{{ moy_s1_label }}</small>
+                            <span class="fs-3 fw-bold text-uac">{{ moy_s1_pct }}%</span>
+                            <small class="text-muted d-block">({{ moy_s1_pts }}/{{ moy_s1_max }} pts)</small>
+                        </div>
+                        {% elif resultats_publies and not autorise_p1 %}
+                        <span class="badge bg-danger p-2"><i class="fas fa-lock me-1"></i>Accès financier requis</span>
+                        {% endif %}
                     </div>
-                    {% elif resultats_publies and not autorise_ex1 %}
-                    <span class="badge bg-danger p-2">Paiement insuffisant pour voir la moyenne</span>
-                    {% endif %}
                 </div>
+
+                {% if not s1_complet and resultats_publies %}
+                <div class="alert alert-danger py-2 px-3 small mb-3 border-0 shadow-sm" style="background-color: #fff5f5;">
+                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                    <strong>Attention :</strong> Calcul de moyenne suspendu. Vous manquez une cote sur : 
+                    {% for m in manquants_s1 %}<span class="badge bg-danger-subtle text-danger border border-danger-subtle mx-1">{{ m }}</span>{% endfor %}
+                </div>
+                {% endif %}
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-hover align-middle">
@@ -286,7 +302,7 @@
                                 <!-- Total S1 -->
                                 <td class="text-center fw-bold bg-light">
                                     {% if s1_toutes_cotes and autorise_p1 and autorise_p2 and autorise_ex1 %}
-                                        {{ ligne.total_obtenu }}
+                                        <span class="text-uac">{{ ligne.total_obtenu }}</span>
                                     {% else %}
                                         <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Masqué</span>
                                     {% endif %}
@@ -331,16 +347,16 @@
                 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-calendar-check fa-2x me-3 text-success"></i>
-                        <h4 class="mb-0 fw-bold text-uac">SECOND SEMESTRE (P3, P4, EX2)</h4>
+                        <h4 class="mb-0 fw-bold text-uac">SECOND SEMESTRE</h4>
                     </div>
-                    {% if resultats_publies and moy_s2_pct is not None and autorise_s2 %}
-                    <div class="text-end p-3 rounded bg-light border">
-                        <small class="text-muted d-block">Moyenne générale S2</small>
-                        <span class="fs-3 fw-bold text-success">{{ moy_s2_pct }}%</span>
+                    {% if resultats_publies and moy_s2_max > 0 %}
+                    <div class="text-end p-3 rounded bg-info bg-opacity-10 border-start border-primary border-4 shadow-sm">
+                        <small class="text-muted d-block fw-bold" style="font-size: 0.7rem;">{{ moy_s2_label }}</small>
+                        <span class="fs-3 fw-bold text-uac">{{ moy_s2_pct }}%</span>
                         <small class="text-muted d-block">({{ moy_s2_pts }} / {{ moy_s2_max }} pts)</small>
                     </div>
                     {% elif resultats_publies and not autorise_s2 %}
-                    <span class="badge bg-danger p-2">Soldez 100% des frais pour voir le S2</span>
+                    <span class="badge bg-danger p-2"><i class="fas fa-lock me-1"></i>Paiement intégral requis</span>
                     {% endif %}
                 </div>
 
@@ -422,17 +438,17 @@
                                 
                                 <!-- Total S2 -->
                                 <td class="text-center fw-bold bg-light">
-                                    {% if s2_toutes_cotes and autorise_s2 %}
+                                    {% if s2_complet and autorise_s2 %}
                                         {{ ligne.total_obtenu }}
                                     {% else %}
                                         <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Masqué</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
-                                    {% if s2_toutes_cotes and autorise_s2 %}
+                                    {% if s2_complet and autorise_s2 %}
                                         {% if ligne.verdict == "Réussi" %}
                                             <span class="badge bg-success">Réussi</span>
-                                        {% else %}
+                                        {% elif ligne.verdict == "Échec" %}
                                             <span class="badge bg-danger">Échec</span>
                                         {% endif %}
                                     {% else %}

@@ -194,63 +194,123 @@ def dashboard_eleve(request):
             }
         )
 
-    cours_eleve = get_cours_classe(eleve.classe)
+    # On récupère strictement les cours rattachés à cette classe spécifique via la relation ManyToMany
+    cours_eleve = Cours.objects.filter(classes=eleve.classe).select_related('max', 'domaine').distinct()
     dict_cotes = build_dict_cotes(eleve)
-    afficher_s2 = Cotes.objects.filter(
-        eleve=eleve, periode__code__in=["P3", "P4", "EX2"], note__isnull=False
-    ).exists()
+
+    # Récupération des statuts des périodes pour filtrer les alertes
+    periodes_status = {p.code.upper(): p.statut for p in Periode.objects.all()}
+
+    # Détection du S2 basée sur le dictionnaire déjà normalisé (évite les erreurs de casse DB)
+    s2_codes = ["P3", "P4", "EX2"]
+    has_notes_s2 = any(k.split('_')[-1] in s2_codes for k in dict_cotes.keys())
+    is_s2_active = any(periodes_status.get(p) == 'ACTIVE' for p in s2_codes)
+    
+    afficher_s2 = has_notes_s2 or is_s2_active
 
     bulletin_s1 = []
     s1_toutes_cotes = True
-    for c in cours_eleve:
-        periodes_data, total_affiche, verdict, complet = build_ligne_bulletin(
-            c, dict_cotes, fin, ["P1", "P2", "EX1"], resultats_publies
-        )
-        if not complet:
-            s1_toutes_cotes = False
-        if any(periodes_data[p]["existe"] for p in ["p1", "p2", "ex1"]):
-            bulletin_s1.append(
-                {
-                    "cours": c,
-                    "p1": periodes_data["p1"],
-                    "p2": periodes_data["p2"],
-                    "ex1": periodes_data["ex1"],
-                    "total_obtenu": total_affiche,
-                    "verdict": verdict,
-                }
-            )
-
+    manquants_s1 = []
     bulletin_s2 = []
     s2_toutes_cotes = True
-    if afficher_s2:
-        for c in cours_eleve:
-            periodes_data, total_affiche, verdict, complet = build_ligne_bulletin(
+    manquants_s2 = []
+    p_stats = {k: {'pts': 0, 'max': 0, 'complet': True} for k in ["P1", "P2", "EX1", "P3", "P4", "EX2"]}
+
+    for c in cours_eleve:
+        # --- TRAITEMENT SEMESTRE 1 ---
+        p_data_s1, tot_s1, verd_s1, comp_s1 = build_ligne_bulletin(
+            c, dict_cotes, fin, ["P1", "P2", "EX1"], resultats_publies
+        )
+        for p_code in ["P1", "P2", "EX1"]:
+            raw_note = dict_cotes.get(f"{c.idCours}_{p_code}")
+            if raw_note is not None:
+                p_stats[p_code]['pts'] += float(raw_note)
+                p_stats[p_code]['max'] += float(c.max.maxima * 2 if p_code.startswith('EX') else c.max.maxima)
+            else:
+                p_stats[p_code]['complet'] = False
+                if periodes_status.get(p_code) == 'ACTIVE':
+                    s1_toutes_cotes = False
+                    manquants_s1.append(f"Vous manquez une cote sur : {c.libelle} ({p_code})")
+
+        if any(p_data_s1[p]["existe"] for p in ["p1", "p2", "ex1"]):
+            bulletin_s1.append({
+                "cours": c, "p1": p_data_s1["p1"], "p2": p_data_s1["p2"], "ex1": p_data_s1["ex1"],
+                "total_obtenu": tot_s1, "verdict": verd_s1,
+            })
+
+        # --- TRAITEMENT SEMESTRE 2 ---
+        if afficher_s2:
+            p_data_s2, tot_s2, verd_s2, comp_s2 = build_ligne_bulletin(
                 c, dict_cotes, fin, ["P3", "P4", "EX2"], resultats_publies
             )
-            if not complet:
-                s2_toutes_cotes = False
-            if any(periodes_data[p]["existe"] for p in ["p3", "p4", "ex2"]):
-                bulletin_s2.append(
-                    {
-                        "cours": c,
-                        "p3": periodes_data["p3"],
-                        "p4": periodes_data["p4"],
-                        "ex2": periodes_data["ex2"],
-                        "total_obtenu": total_affiche,
-                        "verdict": verdict,
-                    }
-                )
+            for p_code in ["P3", "P4", "EX2"]:
+                raw_note = dict_cotes.get(f"{c.idCours}_{p_code}")
+                if raw_note is not None:
+                    p_stats[p_code]['pts'] += float(raw_note)
+                    p_stats[p_code]['max'] += float(c.max.maxima * 2 if p_code.startswith('EX') else c.max.maxima)
+                else:
+                    p_stats[p_code]['complet'] = False
+                    if periodes_status.get(p_code) == 'ACTIVE':
+                        s2_toutes_cotes = False
+                        manquants_s2.append(f"Vous manquez une cote sur : {c.libelle} ({p_code})")
+
+            if any(p_data_s2[p]["existe"] for p in ["p3", "p4", "ex2"]):
+                bulletin_s2.append({
+                    "cours": c, "p3": p_data_s2["p3"], "p4": p_data_s2["p4"], "ex2": p_data_s2["ex2"],
+                    "total_obtenu": tot_s2, "verdict": verd_s2,
+                })
 
     decision_jury = DecisionJury.objects.filter(
         eleve=eleve, classe=eleve.classe
     ).first()
 
-    moy_s1_pct, moy_s1_pts, moy_s1_max, s1_complet = calculer_moyenne_semestre(
-        eleve, ["P1", "P2", "EX1"]
-    )
-    moy_s2_pct, moy_s2_pts, moy_s2_max, s2_complet = calculer_moyenne_semestre(
-        eleve, ["P3", "P4", "EX2"]
-    )
+    # Calcul final des pourcentages par période (DOIT ÊTRE FAIT AVANT LA LOGIQUE D'AFFICHAGE DYNAMIQUE)
+    for s_info in p_stats.values():
+        if s_info['max'] > 0:
+            s_info['pct'] = round((s_info['pts'] / s_info['max'] * 100), 1)
+
+    # --- LOGIQUE D'AFFICHAGE DYNAMIQUE (SEMESTRE 1) ---
+    pts_s1_total = sum(p_stats[k]['pts'] for k in ["P1", "P2", "EX1"])
+    max_s1_total = sum(p_stats[k]['max'] for k in ["P1", "P2", "EX1"])
+    
+    # Variables par défaut
+    moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max, moy_s1_label = 0, 0, 0, ""
+
+    # Priorité : Moyenne Semestrielle (EX1 fini) -> P2 fini -> P1
+    if p_stats['P1']['complet'] and p_stats['P2']['complet'] and p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0 and fin['acces_ex1']:
+        moy_s1_disp_pct = round((pts_s1_total / max_s1_total * 100), 1)
+        moy_s1_disp_pts, moy_s1_disp_max = pts_s1_total, max_s1_total
+        moy_s1_label = "MOYENNE GÉNÉRALE S1"
+    elif p_stats['P2']['complet'] and p_stats['P2']['max'] > 0 and fin['acces_p2']:
+        moy_s1_disp_pct = p_stats['P2']['pct']
+        moy_s1_disp_pts, moy_s1_disp_max = p_stats['P2']['pts'], p_stats['P2']['max']
+        moy_s1_label = "POURCENTAGE P2"
+    elif p_stats['P1']['complet'] and p_stats['P1']['max'] > 0 and fin['acces_p1']:
+        moy_s1_disp_pct = p_stats['P1']['pct']
+        moy_s1_disp_pts, moy_s1_disp_max = p_stats['P1']['pts'], p_stats['P1']['max']
+        moy_s1_label = "POURCENTAGE P1"
+
+    # --- LOGIQUE D'AFFICHAGE DYNAMIQUE (SEMESTRE 2) ---
+    pts_s2_total = sum(p_stats[k]['pts'] for k in ["P3", "P4", "EX2"])
+    max_s2_total = sum(p_stats[k]['max'] for k in ["P3", "P4", "EX2"])
+    
+    moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max, moy_s2_label = 0, 0, 0, ""
+
+    if p_stats['P3']['complet'] and p_stats['P4']['complet'] and p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0 and fin['acces_s2']:
+        moy_s2_disp_pct = round((pts_s2_total / max_s2_total * 100), 1)
+        moy_s2_disp_pts, moy_s2_disp_max = pts_s2_total, max_s2_total
+        moy_s2_label = "MOYENNE GÉNÉRALE S2"
+    elif p_stats['P4']['complet'] and p_stats['P4']['max'] > 0 and fin['acces_s2']:
+        moy_s2_disp_pct = p_stats['P4']['pct']
+        moy_s2_disp_pts, moy_s2_disp_max = p_stats['P4']['pts'], p_stats['P4']['max']
+        moy_s2_label = "POURCENTAGE P4"
+    elif p_stats['P3']['complet'] and p_stats['P3']['max'] > 0 and fin['acces_s2']:
+        moy_s2_disp_pct = p_stats['P3']['pct']
+        moy_s2_disp_pts, moy_s2_disp_max = p_stats['P3']['pts'], p_stats['P3']['max']
+        moy_s2_label = "POURCENTAGE P3"
+
+    s1_complet = s1_toutes_cotes
+    s2_complet = s2_toutes_cotes
 
     context = {
         "eleve": eleve,
@@ -269,14 +329,19 @@ def dashboard_eleve(request):
         "autorise_s2": fin["acces_s2"] and resultats_publies,
         "resultats_publies": resultats_publies,
         "decision_jury": decision_jury,
-        "moy_s1_pct": moy_s1_pct,
-        "moy_s1_pts": moy_s1_pts,
-        "moy_s1_max": moy_s1_max,
+        "moy_s1_pct": moy_s1_disp_pct,
+        "moy_s1_pts": moy_s1_disp_pts,
+        "moy_s1_max": moy_s1_disp_max,
+        "moy_s1_label": moy_s1_label,
         "s1_complet": s1_complet,
-        "moy_s2_pct": moy_s2_pct,
-        "moy_s2_pts": moy_s2_pts,
-        "moy_s2_max": moy_s2_max,
+        "moy_s2_pct": moy_s2_disp_pct,
+        "moy_s2_pts": moy_s2_disp_pts,
+        "moy_s2_max": moy_s2_disp_max,
+        "moy_s2_label": moy_s2_label,
         "s2_complet": s2_complet,
+        "p_stats": p_stats,
+        "manquants_s1": manquants_s1,
+        "manquants_s2": manquants_s2,
     }
     return render(request, "management/dashboard_eleve.html", context)
 

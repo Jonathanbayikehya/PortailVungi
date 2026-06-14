@@ -65,14 +65,14 @@ def get_cours_classe(classe):
 def build_dict_cotes(eleve):
     cotes = Cotes.objects.filter(eleve=eleve).select_related('cours', 'periode')
     return {
-        f"{c.cours_id}_{c.periode.code}": c.note
+        f"{c.cours_id}_{c.periode.code.upper()}": c.note
         for c in cotes
         if c.note is not None
     }
 
 
 def _maxima_periode(code, max_p):
-    return max_p * 2 if code.startswith('EX') else max_p
+    return max_p * 2 if code.upper().startswith('EX') else max_p
 
 
 def calculer_bilan_cours(cours, dict_cotes, codes_periodes):
@@ -81,7 +81,7 @@ def calculer_bilan_cours(cours, dict_cotes, codes_periodes):
     maxima = []
 
     for code in codes_periodes:
-        raw = dict_cotes.get(f"{cours.idCours}_{code}")
+        raw = dict_cotes.get(f"{cours.idCours}_{code.upper()}")
         if raw is None:
             return None, None, 'En attente', False
         notes.append(raw)
@@ -128,8 +128,8 @@ def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, resultats_publi
     periodes_data = {}
 
     for code in codes_periodes:
-        raw = dict_cotes.get(f"{cours.idCours}_{code}", '-')
-        max_val = max_ex if code.startswith('EX') else max_p
+        raw = dict_cotes.get(f"{cours.idCours}_{code.upper()}", '-')
+        max_val = max_ex if code.upper().startswith('EX') else max_p
         existe = raw != '-'
         acces_key = PERIODE_ACCES[code]
         has_acces = fin.get(acces_key, False)
