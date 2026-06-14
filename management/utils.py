@@ -159,7 +159,8 @@ def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, resultats_publi
         total_affiche = 'Masqué'
         verdict_final = 'Masqué'
     else:
-        total_affiche = f"{obtenu} / {total_max}"
+        pct = round((obtenu / total_max * 100), 1) if total_max > 0 else 0
+        total_affiche = f"{obtenu} / {total_max} (<b>{pct}%</b>)"
         verdict_final = verdict
 
     return periodes_data, total_affiche, verdict_final, complet

@@ -201,12 +201,12 @@ def dashboard_eleve(request):
     # Récupération des statuts des périodes pour filtrer les alertes
     periodes_status = {p.code.upper(): p.statut for p in Periode.objects.all()}
 
-    # Détection du S2 basée sur le dictionnaire déjà normalisé (évite les erreurs de casse DB)
+    # Détection du S2 : on l'affiche si des notes existent OU si une période du S2 a démarré (ACTIVE ou CLOTUREE)
     s2_codes = ["P3", "P4", "EX2"]
     has_notes_s2 = any(k.split('_')[-1] in s2_codes for k in dict_cotes.keys())
-    is_s2_active = any(periodes_status.get(p) == 'ACTIVE' for p in s2_codes)
-    
-    afficher_s2 = has_notes_s2 or is_s2_active
+    is_s2_started = any(periodes_status.get(p) in ['ACTIVE', 'CLOTUREE'] for p in s2_codes)
+
+    afficher_s2 = has_notes_s2 or is_s2_started
 
     bulletin_s1 = []
     s1_toutes_cotes = True
@@ -228,9 +228,9 @@ def dashboard_eleve(request):
                 p_stats[p_code]['max'] += float(c.max.maxima * 2 if p_code.startswith('EX') else c.max.maxima)
             else:
                 p_stats[p_code]['complet'] = False
-                if periodes_status.get(p_code) == 'ACTIVE':
+                if periodes_status.get(p_code) in ['ACTIVE', 'CLOTUREE']:
                     s1_toutes_cotes = False
-                    manquants_s1.append(f"Vous manquez une cote sur : {c.libelle} ({p_code})")
+                    manquants_s1.append(f"Attention : Calcul de moyenne suspendu. Vous manquez une cote sur : {c.libelle} ({p_code})")
 
         if any(p_data_s1[p]["existe"] for p in ["p1", "p2", "ex1"]):
             bulletin_s1.append({
@@ -250,9 +250,9 @@ def dashboard_eleve(request):
                     p_stats[p_code]['max'] += float(c.max.maxima * 2 if p_code.startswith('EX') else c.max.maxima)
                 else:
                     p_stats[p_code]['complet'] = False
-                    if periodes_status.get(p_code) == 'ACTIVE':
+                    if periodes_status.get(p_code) in ['ACTIVE', 'CLOTUREE']:
                         s2_toutes_cotes = False
-                        manquants_s2.append(f"Vous manquez une cote sur : {c.libelle} ({p_code})")
+                        manquants_s2.append(f"Attention : Calcul de moyenne suspendu. Vous manquez une cote sur : {c.libelle} ({p_code})")
 
             if any(p_data_s2[p]["existe"] for p in ["p3", "p4", "ex2"]):
                 bulletin_s2.append({
@@ -273,22 +273,28 @@ def dashboard_eleve(request):
     pts_s1_total = sum(p_stats[k]['pts'] for k in ["P1", "P2", "EX1"])
     max_s1_total = sum(p_stats[k]['max'] for k in ["P1", "P2", "EX1"])
     
-    # Variables par défaut
     moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max, moy_s1_label = 0, 0, 0, ""
 
-    # Priorité : Moyenne Semestrielle (EX1 fini) -> P2 fini -> P1
-    if p_stats['P1']['complet'] and p_stats['P2']['complet'] and p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0 and fin['acces_ex1']:
-        moy_s1_disp_pct = round((pts_s1_total / max_s1_total * 100), 1)
-        moy_s1_disp_pts, moy_s1_disp_max = pts_s1_total, max_s1_total
-        moy_s1_label = "MOYENNE GÉNÉRALE S1"
-    elif p_stats['P2']['complet'] and p_stats['P2']['max'] > 0 and fin['acces_p2']:
-        moy_s1_disp_pct = p_stats['P2']['pct']
-        moy_s1_disp_pts, moy_s1_disp_max = p_stats['P2']['pts'], p_stats['P2']['max']
-        moy_s1_label = "POURCENTAGE P2"
-    elif p_stats['P1']['complet'] and p_stats['P1']['max'] > 0 and fin['acces_p1']:
-        moy_s1_disp_pct = p_stats['P1']['pct']
-        moy_s1_disp_pts, moy_s1_disp_max = p_stats['P1']['pts'], p_stats['P1']['max']
-        moy_s1_label = "POURCENTAGE P1"
+    if not resultats_publies:
+        moy_s1_label = "RÉSULTATS NON DISPONIBLES"
+    else:
+        # Si l'examen est fini et complet
+        if p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0 and fin['acces_ex1']:
+            moy_s1_disp_pct = round((pts_s1_total / max_s1_total * 100), 1)
+            moy_s1_disp_pts, moy_s1_disp_max = pts_s1_total, max_s1_total
+            moy_s1_label = "MOYENNE GÉNÉRALE S1"
+        # Sinon, on affiche le pourcentage de la période P2 si elle est en cours
+        elif p_stats['P2']['complet'] and p_stats['P2']['max'] > 0 and fin['acces_p2']:
+            moy_s1_disp_pct = p_stats['P2']['pct']
+            moy_s1_disp_pts, moy_s1_disp_max = p_stats['P2']['pts'], p_stats['P2']['max']
+            moy_s1_label = "POURCENTAGE P2"
+        # Sinon, P1
+        elif p_stats['P1']['complet'] and p_stats['P1']['max'] > 0 and fin['acces_p1']:
+            moy_s1_disp_pct = p_stats['P1']['pct']
+            moy_s1_disp_pts, moy_s1_disp_max = p_stats['P1']['pts'], p_stats['P1']['max']
+            moy_s1_label = "POURCENTAGE P1"
+        else:
+            moy_s1_label = "MOYENNE SUSPENDUE"
 
     # --- LOGIQUE D'AFFICHAGE DYNAMIQUE (SEMESTRE 2) ---
     pts_s2_total = sum(p_stats[k]['pts'] for k in ["P3", "P4", "EX2"])
@@ -296,18 +302,23 @@ def dashboard_eleve(request):
     
     moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max, moy_s2_label = 0, 0, 0, ""
 
-    if p_stats['P3']['complet'] and p_stats['P4']['complet'] and p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0 and fin['acces_s2']:
-        moy_s2_disp_pct = round((pts_s2_total / max_s2_total * 100), 1)
-        moy_s2_disp_pts, moy_s2_disp_max = pts_s2_total, max_s2_total
-        moy_s2_label = "MOYENNE GÉNÉRALE S2"
-    elif p_stats['P4']['complet'] and p_stats['P4']['max'] > 0 and fin['acces_s2']:
-        moy_s2_disp_pct = p_stats['P4']['pct']
-        moy_s2_disp_pts, moy_s2_disp_max = p_stats['P4']['pts'], p_stats['P4']['max']
-        moy_s2_label = "POURCENTAGE P4"
-    elif p_stats['P3']['complet'] and p_stats['P3']['max'] > 0 and fin['acces_s2']:
-        moy_s2_disp_pct = p_stats['P3']['pct']
-        moy_s2_disp_pts, moy_s2_disp_max = p_stats['P3']['pts'], p_stats['P3']['max']
-        moy_s2_label = "POURCENTAGE P3"
+    if not resultats_publies:
+        moy_s2_label = "RÉSULTATS NON DISPONIBLES"
+    else:
+        if p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0 and fin['acces_s2']:
+            moy_s2_disp_pct = round((pts_s2_total / max_s2_total * 100), 1)
+            moy_s2_disp_pts, moy_s2_disp_max = pts_s2_total, max_s2_total
+            moy_s2_label = "MOYENNE GÉNÉRALE S2"
+        elif p_stats['P4']['complet'] and p_stats['P4']['max'] > 0 and fin['acces_s2']:
+            moy_s2_disp_pct = p_stats['P4']['pct']
+            moy_s2_disp_pts, moy_s2_disp_max = p_stats['P4']['pts'], p_stats['P4']['max']
+            moy_s2_label = "POURCENTAGE P4"
+        elif p_stats['P3']['complet'] and p_stats['P3']['max'] > 0 and fin['acces_s2']:
+            moy_s2_disp_pct = p_stats['P3']['pct']
+            moy_s2_disp_pts, moy_s2_disp_max = p_stats['P3']['pts'], p_stats['P3']['max']
+            moy_s2_label = "POURCENTAGE P3"
+        else:
+            moy_s2_label = "MOYENNE SUSPENDUE"
 
     s1_complet = s1_toutes_cotes
     s2_complet = s2_toutes_cotes
@@ -454,7 +465,7 @@ def dashboard_proviseur(request):
 
         messages.success(request, f"Attribution mise à jour pour {cours_obj.libelle}")
         return redirect(
-            f"/management/proviseur/?classe_id={classe_id}#attribution-panel"
+            f"/management/proviseur/?classe_id={classe_id}&sub=attribution#config-classe-panel"
         )
 
     # B. Gestion des statuts de la Période
@@ -508,6 +519,46 @@ def dashboard_proviseur(request):
             f"/management/proviseur/?classe_delib={classe_id}#deliberation-panel"
         )
 
+    # E. Gestion des Classes (Ajout/Modif/Suppr)
+    if request.method == "POST" and "ajouter_classe" in request.POST:
+        nom = request.POST.get("nomClasse")
+        ann = request.POST.get("annee")
+        opt = get_object_or_404(Option, pk=request.POST.get("option_id"))
+        tit_id = request.POST.get("titulaire_id")
+        tit = Enseignant.objects.filter(pk=tit_id).first() if tit_id else None
+        typ = request.POST.get("type_bulletin")
+        
+        Classe.objects.create(nomClasse=nom, annee=ann, option=opt, idEns=tit, type_bulletin=typ)
+        messages.success(request, f"La classe {nom} a été créée avec succès.")
+        return redirect("/management/proviseur/#config-classe-panel")
+
+    if request.method == "POST" and "modifier_classe" in request.POST:
+        classe_id = request.POST.get("classe_id")
+        classe_obj = get_object_or_404(Classe, pk=classe_id)
+        
+        classe_obj.nomClasse = request.POST.get("nomClasse")
+        classe_obj.annee = request.POST.get("annee")
+        classe_obj.option = get_object_or_404(Option, pk=request.POST.get("option_id"))
+        
+        tit_id = request.POST.get("titulaire_id")
+        classe_obj.idEns = Enseignant.objects.filter(pk=tit_id).first() if tit_id else None
+        
+        classe_obj.type_bulletin = request.POST.get("type_bulletin")
+        classe_obj.save()
+        
+        messages.success(request, f"La classe {classe_obj.nomClasse} a été mise à jour.")
+        return redirect("/management/proviseur/#config-classe-panel")
+
+    if request.method == "POST" and "supprimer_classe" in request.POST:
+        classe_id = request.POST.get("classe_id")
+        classe_obj = get_object_or_404(Classe, pk=classe_id)
+        nom_c = classe_obj.nomClasse
+        # Note : La suppression d'une classe supprimera par cascade les élèves et les cotes rattachées (Standard Django)
+        classe_obj.delete()
+        messages.warning(request, f"La classe {nom_c} a été supprimée définitivement.")
+        return redirect("/management/proviseur/#config-classe-panel")
+
+
     # --- 2. TRAITEMENT GET (Données) ---
     toutes_les_classes = Classe.objects.all()
     tous_enseignants = Enseignant.objects.all().order_by("nom")
@@ -555,6 +606,8 @@ def dashboard_proviseur(request):
     context = {
         "liste_classes_global": toutes_les_classes,
         "liste_enseignants_global": tous_enseignants,
+        "toutes_les_options": Option.objects.all(),
+        "type_bulletin_choices": Classe.TYPE_BULLETIN_CHOICES,
         "classe_selectionnee": classe_sel,
         "classe_delib": classe_delib,
         "cours_de_la_classe": cours_de_la_classe,

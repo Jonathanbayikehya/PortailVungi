@@ -126,9 +126,9 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="attribution-tab" data-bs-toggle="tab" data-bs-target="#attribution-panel" type="button" role="tab">
-                    <i class="fa-solid fa-book-bookmark"></i>
-                    <span>Attribuer Cours</span>
+                <button class="nav-link" id="config-classe-tab" data-bs-toggle="tab" data-bs-target="#config-classe-panel" type="button" role="tab">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    <span>Configuration Scolaire</span>
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -281,17 +281,134 @@
                 </div>
             </div>
 
-            <div class="tab-pane fade" id="attribution-panel" role="tabpanel">
-                <div class="card shadow-sm border-0">
+            <div class="tab-pane fade" id="config-classe-panel" role="tabpanel">
+
+                <!-- Sous-menu de configuration scolaire -->
+                <ul class="nav nav-pills mb-4 bg-white p-2 rounded shadow-sm d-inline-flex gap-2" id="configSubTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active btn-sm py-2 px-3 fw-bold" id="sub-classes-tab" data-bs-toggle="pill" data-bs-target="#sub-classes-panel" type="button" role="tab">
+                            <i class="fa-solid fa-layer-group me-1"></i> Classes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link btn-sm py-2 px-3 fw-bold" id="sub-attribution-tab" data-bs-toggle="pill" data-bs-target="#sub-attribution-panel" type="button" role="tab">
+                            <i class="fa-solid fa-book-bookmark me-1"></i> Attribution de cours
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="configSubTabContent">
+                    <!-- SOUS-ONGLET 1 : GESTION DES CLASSES -->
+                    <div class="tab-pane fade show active" id="sub-classes-panel" role="tabpanel">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0 text-uac-blue fw-bold">
+                                    <i class="fa-solid fa-layer-group me-2"></i>Gestion des Classes
+                                </h5>
+                                <button class="btn btn-sm btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#modalAjouterClasse">
+                                    <i class="fa-solid fa-plus-circle me-1"></i> Nouvelle Classe
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="ps-4">Classe</th>
+                                            <th>Option</th>
+                                            <th>Année</th>
+                                            <th>Titulaire</th>
+                                            <th>Type Bulletin</th>
+                                            <th class="text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for cl in liste_classes_global %}
+                                        <tr>
+                                            <td class="ps-4 fw-bold text-uac-blue">{{ cl.nomClasse }}</td>
+                                            <td>{{ cl.option.nomOption }}</td>
+                                            <td>{{ cl.annee }}</td>
+                                            <td>{{ cl.idEns.nom|default:"Non assigné" }}</td>
+                                            <td><span class="badge bg-info-subtle text-info">{{ cl.get_type_bulletin_display }}</span></td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#modalEditClasse{{ cl.pk }}">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalDeleteClasse{{ cl.pk }}">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+
+                                        <!-- Modal Modifier Classe -->
+                                        <div class="modal fade" id="modalEditClasse{{ cl.pk }}" tabindex="-1">
+                                            <div class="modal-dialog">
+                                                <form method="POST" class="modal-content">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="classe_id" value="{{ cl.pk }}">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fw-bold">Modifier {{ cl.nomClasse }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Nom de la classe</label>
+                                                            <input type="text" name="nomClasse" class="form-control" value="{{ cl.nomClasse }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Année Scolaire</label>
+                                                            <input type="text" name="annee" class="form-control" value="{{ cl.annee }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Option</label>
+                                                            <select name="option_id" class="form-select">
+                                                                {% for opt in toutes_les_options %}
+                                                                <option value="{{ opt.pk }}" {% if cl.option.pk == opt.pk %}selected{% endif %}>{{ opt.nomOption }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Enseignant Titulaire</label>
+                                                            <select name="titulaire_id" class="form-select">
+                                                                <option value="">-- Aucun --</option>
+                                                                {% for ens in liste_enseignants_global %}
+                                                                <option value="{{ ens.pk }}" {% if cl.idEns.pk == ens.pk %}selected{% endif %}>{{ ens.nom }} {{ ens.postnom }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label small fw-bold">Modèle de bulletin</label>
+                                                            <select name="type_bulletin" class="form-select">
+                                                                {% for val, label in type_bulletin_choices %}
+                                                                <option value="{{ val }}" {% if cl.type_bulletin == val %}selected{% endif %}>{{ label }}</option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="submit" name="modifier_classe" class="btn btn-primary fw-bold">Mettre à jour</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SOUS-ONGLET 2 : ATTRIBUTION DES COURS -->
+                    <div class="tab-pane fade" id="sub-attribution-panel" role="tabpanel">
+                        <div class="card shadow-sm border-0">
                     <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
                         <div>
                             <h5 class="card-title mb-0 text-uac-blue fw-bold">
-                                <i class="fa-solid fa-rectangle-list me-2"></i>Attribution de cours aux enseignants
+                                <i class="fa-solid fa-book-bookmark me-2"></i>Attribution des Cours
                             </h5>
-                            <p class="text-muted small mb-0">Sélectionnez ou recherchez une classe pour distribuer les cours et affecter le personnel.</p>
                         </div>
                         
                         <form method="GET" action="" class="d-flex align-items-center gap-2" style="min-width: 320px;">
+                            <input type="hidden" name="sub" value="attribution">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-light text-muted fw-bold">Classe :</span>
                                 <select name="classe_id" class="form-select form-select-sm fw-bold border-secondary-subtle" onchange="this.form.submit()">
@@ -319,14 +436,12 @@
                                 </span>
                             </div>
 
-                           <!-- DÉBUT TABLEAU D'ATTRIBUTION COMPLET -->
                             <div class="table-responsive">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th class="ps-4">N°</th>
+                                            <th class="ps-4">Cours</th>
                                             <th>Code</th>
-                                            <th>Nom du Cours</th>
                                             <th>Enseignant Actuel</th>
                                             <th>Action</th>
                                         </tr>
@@ -334,14 +449,11 @@
                                     <tbody>
                                         {% for cours in cours_de_la_classe %}
                                         <tr>
-                                            <td class="ps-4">{{ forloop.counter }}</td>
+                                            <td class="ps-4 fw-bold text-uac-blue">{{ cours.libelle }}</td>
                                             <td><span class="badge bg-secondary-subtle text-dark">{{ cours.idCours }}</span></td>
-                                            <td class="fw-bold text-uac-blue">{{ cours }}</td>
+                                            <td>{{ cours.enseignant_actuel.nom|default:"Non attribué" }}</td>
                                             <td>
-                                                {{ cours.enseignant_actuel.nom|default:"Non attribué" }}
-                                            </td>
-                                            <td>
-                                                <form method="POST" action="{% url 'dashboard_proviseur' %}?classe_id={{ classe_selectionnee.pk }}#attribution-panel" class="d-flex gap-2">
+                                                <form method="POST" action="{% url 'dashboard_proviseur' %}?classe_id={{ classe_selectionnee.pk }}&sub=attribution#config-classe-panel" class="d-flex gap-2">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="cours_id" value="{{ cours.idCours }}">
                                                     <input type="hidden" name="classe_id" value="{{ classe_selectionnee.pk }}">
@@ -353,11 +465,8 @@
                                                         
                                                         {% for ens in liste_enseignants_global %}
                                                             <option value="{{ ens.idEns }}" 
-                                                                {% if cours.enseignant_actuel and cours.enseignant_actuel.idEns == ens.idEns %}selected{% endif %}>
-                                                                
-                                                                {# Affichage du nom complet ici #}
-                                                                {{ ens.nom|default:"Sans nom" }} {{ ens.postnom|default:"" }}
-                                                                
+                                                                {% if cours.enseignant_actuel and cours.enseignant_actuel.idEns == ens.idEns %}selected{% endif %}>                                                                
+                                                                {{ ens.nom }} {{ ens.postnom }}
                                                             </option>
                                                         {% endfor %}
                                                     </select>
@@ -370,15 +479,49 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
-                            </div>
-                            <!-- FIN TABLEAU D'ATTRIBUTION COMPLET -->
+                            </div> <!-- Fin table-responsive -->
                         {% else %}
                             <div class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-circle-exclamation display-6 mb-2 text-warning"></i><br>
-                                Veuillez d'abord enregistrer des classes dans le système pour gérer les attributions.
+                                <p>Veuillez sélectionner une classe pour gérer ses cours.</p>
                             </div>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+            <!-- Modal Ajouter Classe -->
+            <div class="modal fade" id="modalAjouterClasse" tabindex="-1">
+                <div class="modal-dialog">
+                    <form method="POST" class="modal-content">
+                        {% csrf_token %}
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2"></i>Créer une nouvelle classe</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3"><label class="form-label small fw-bold">Nom (ex: 7ème A)</label><input type="text" name="nomClasse" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label small fw-bold">Année Scolaire (ex: 2025-2026)</label><input type="text" name="annee" class="form-control" value="2025-2026" required></div>
+                            <div class="mb-3"><label class="form-label small fw-bold">Option</label>
+                                <select name="option_id" class="form-select">
+                                    {% for opt in toutes_les_options %}<option value="{{ opt.pk }}">{{ opt.nomOption }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3"><label class="form-label small fw-bold">Titulaire initial</label>
+                                <select name="titulaire_id" class="form-select">
+                                    <option value="">-- Aucun --</option>
+                                    {% for ens in liste_enseignants_global %}<option value="{{ ens.pk }}">{{ ens.nom }} {{ ens.postnom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3"><label class="form-label small fw-bold">Type de Bulletin</label>
+                                <select name="type_bulletin" class="form-select">
+                                    {% for val, label in type_bulletin_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer"><button type="submit" name="ajouter_classe" class="btn btn-success fw-bold">Confirmer la création</button></div>
+                    </form>
                 </div>
             </div>
 
@@ -704,33 +847,44 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        var hash = window.location.hash;
-        
-        // Si l'URL contient ?classe_id=, on force l'affichage de l'onglet attribution-panel
-        if (!hash && window.location.search.includes('classe_id') && !window.location.search.includes('classe_delib')) {
-            hash = '#attribution-panel';
-        }
-        if (!hash && window.location.search.includes('classe_delib')) {
-            hash = '#deliberation-panel';
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetMainTabId = window.location.hash; // Commence avec le hachage explicite de l'URL
+
+        // Priorité aux paramètres d'URL pour déterminer le panneau principal si aucun hachage direct n'est présent
+        if (!targetMainTabId) {
+            if (urlParams.has('classe_id') || urlParams.has('sub')) {
+                targetMainTabId = '#config-classe-panel';
+            } else if (urlParams.has('classe_delib')) {
+                targetMainTabId = '#deliberation-panel';
+            }
         }
 
-        if (hash) {
-            var triggerEl = document.querySelector('button[data-bs-target="' + hash + '"]');
-            if (triggerEl) {
-                // Retire la classe 'active' de tous les boutons et contenus
-                document.querySelectorAll('.sidebar-menu .nav-link').forEach(function(btn) {
-                    btn.classList.remove('active');
-                });
-                document.querySelectorAll('.tab-content .tab-pane').forEach(function(pane) {
-                    pane.classList.remove('show', 'active');
-                });
+        // Si aucun panneau principal n'a été déterminé par le hachage ou les paramètres, on utilise le panneau par défaut
+        if (!targetMainTabId) {
+            targetMainTabId = '#communique-panel'; // Le panneau "Vue d'ensemble" est le défaut
+        }
 
-                // Ajoute la classe 'active' au bon bouton et au bon contenu
-                triggerEl.classList.add('active');
-                var targetPane = document.querySelector(hash);
-                if (targetPane) {
-                    targetPane.classList.add('show', 'active');
-                }
+        // Active le panneau principal déterminé
+        const mainTabTriggerEl = document.querySelector(`button[data-bs-target="${targetMainTabId}"]`);
+        if (mainTabTriggerEl) {
+            const mainTab = new bootstrap.Tab(mainTabTriggerEl);
+            mainTab.show();
+        }
+
+        // Gère spécifiquement les sous-onglets si le panneau de configuration scolaire est actif
+
+        if (targetMainTabId === '#config-classe-panel') {
+            const subType = urlParams.get('sub');
+            let subTarget = '#sub-classes-tab'; // Par défaut
+            
+            if (subType === 'attribution' || urlParams.has('classe_id')) {
+                subTarget = '#sub-attribution-tab';
+            }
+            
+            const subTrigger = document.querySelector(subTarget);
+            if (subTrigger) {
+                const subTab = new bootstrap.Tab(subTrigger);
+                subTab.show();
             }
         }
     });
