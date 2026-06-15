@@ -23,8 +23,11 @@
         .sidebar-menu {
             background: var(--uac-blue);
             color: white;
-            width: 220px;
+            width: 240px;
+            min-width: 240px;
+            max-width: 240px;
             min-height: 100vh;
+            flex-shrink: 0;
             padding: 15px 5px;
             display: flex;
             flex-direction: column;
@@ -119,6 +122,7 @@
         @media (max-width: 767.98px) {
             .sidebar-menu {
                 width: 75px;
+                min-width: 75px;
             }
             .hide-on-mobile {
                 display: none !important;
@@ -158,6 +162,11 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="enseignants-tab" data-bs-toggle="tab" data-bs-target="#enseignants-panel" type="button" role="tab">
                     <i class="fa-solid fa-chalkboard-user"></i><span>Enseignants / Cours</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="deliberation-tab" data-bs-toggle="tab" data-bs-target="#deliberation-panel" type="button" role="tab">
+                    <i class="fa-solid fa-gavel"></i><span>Délibération</span>
                 </button>
             </li>
         </ul>
@@ -421,15 +430,117 @@
                     </div>
                 </div>
             </div>
+
+            <!-- PANEL 4 : DÉLIBÉRATION -->
+            <div class="tab-pane fade" id="deliberation-panel" role="tabpanel" aria-labelledby="deliberation-tab">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-white card-header-flex py-3 border-bottom">
+                        <h5 class="card-title mb-0 text-uac-blue fw-bold">
+                            <i class="fa-solid fa-gavel me-2"></i>DÉLIBÉRATION DE LA CLASSE
+                        </h5>
+                        <form method="GET" action="" class="d-flex align-items-center gap-2">
+                            <select name="periode_delib" class="form-select form-select-sm fw-bold" onchange="this.form.submit()">
+                                <option value="ANNUEL" {% if periode_delib == "ANNUEL" %}selected{% endif %}>Bilan Annuel</option>
+                                {% for p in periodes %}
+                                    <option value="{{ p.code }}" {% if periode_delib == p.code %}selected{% endif %}>{{ p.nomPeriode }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover border align-middle shadow-sm mb-0">
+                                <thead class="table-light border-bottom">
+                                    <tr>
+                                        <th class="ps-3">Élève</th>
+                                        <th class="text-center">Finances</th>
+                                        <th class="text-center">Moyenne {% if periode_delib == "ANNUEL" %}Annuelle{% else %}{{ periode_delib }}{% endif %}</th>
+                                        <th class="text-center">Cours</th>
+                                        <th class="text-center">Décision Jury</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ligne in deliberation_data.lignes %}
+                                    <tr {% if not ligne.complet %}class="table-light"{% endif %}>
+                                        <td class="ps-3">
+                                            <div class="fw-bold text-uac-blue">{{ ligne.eleve.nom }} {{ ligne.eleve.postnom }}</div>
+                                            <code class="text-muted small">{{ ligne.eleve.matriculeEleve }}</code>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if ligne.reste_a_payer <= 0 %}
+                                                <i class="fa-solid fa-circle-check text-success" title="En règle"></i>
+                                            {% else %}
+                                                <span class="badge bg-danger-subtle text-danger">{{ ligne.reste_a_payer|floatformat:2 }}$</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if ligne.complet %}
+                                                <div class="fs-5 fw-bold {% if ligne.pct >= 50 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ ligne.pct }}%
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small italic">Incomplet</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                {% for cr in ligne.cours_resultats %}
+                                                    <span class="badge {% if cr.verdict == 'Réussi' %}bg-success{% elif cr.verdict == 'Échec' %}bg-danger{% else %}bg-secondary{% endif %}" 
+                                                          style="width: 12px; height: 12px; padding: 0;" title="{{ cr.cours.libelle }}: {{ cr.verdict }}"></span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if ligne.decision_jury %}
+                                                <span class="badge {% if ligne.decision_jury.decision == 'ADMIS' %}bg-success{% elif ligne.decision_jury.decision == 'ECHEC' %}bg-danger{% else %}bg-primary{% endif %}">
+                                                    {{ ligne.decision_jury.get_decision_display }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted small">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="5" class="text-center text-muted py-4">Aucun élève.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Optionnel : forcer le rafraîchissement des tooltips ou autre
     document.addEventListener('DOMContentLoaded', function() {
-        // Tous les alertes bootstrap sont déjà gérés
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetTabId = window.location.hash;
+
+        if (!targetTabId) {
+            if (urlParams.has('periode_delib')) {
+                targetTabId = '#deliberation-panel';
+            } else {
+                targetTabId = localStorage.getItem('titulaireActiveTab') || '#liste-panel';
+            }
+        }
+
+        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetTabId}"]`);
+        if (tabTriggerEl) {
+            const tab = new bootstrap.Tab(tabTriggerEl);
+            tab.show();
+        }
+
+        const allTabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        allTabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                localStorage.setItem('titulaireActiveTab', target);
+                history.pushState(null, null, target);
+            });
+        });
     });
 </script>
 </body>

@@ -37,7 +37,12 @@
         }
         
         @media (min-width: 768px) {
-            .sidebar-menu { width: 240px; }
+            .sidebar-menu { 
+                width: 240px; 
+                min-width: 240px; 
+                max-width: 240px;
+                flex-shrink: 0;
+            }
             .sidebar-menu .nav-link span { display: inline-block !important; font-size: 0.9rem; margin-top: 5px; }
         }
 
@@ -704,125 +709,137 @@
                                     <option value="{{ cl.pk }}" {% if classe_delib.pk == cl.pk %}selected{% endif %}>{{ cl }}</option>
                                 {% endfor %}
                             </select>
+                            <select name="periode_delib" class="form-select form-select-sm fw-bold" onchange="this.form.submit()">
+                                <option value="ANNUEL" {% if periode_delib == "ANNUEL" %}selected{% endif %}>Bilan Annuel</option>
+                                {% for p in periodes %}
+                                    <option value="{{ p.code }}" {% if periode_delib == p.code %}selected{% endif %}>{{ p.nomPeriode }}</option>
+                                {% endfor %}
+                            </select>
                         </form>
                     </div>
 
                     <div class="card-body">
                         <!-- Publication des résultats -->
-                        <div class="alert {% if publication.est_publiee %}alert-success{% else %}alert-warning{% endif %} d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-                            <div>
-                                <strong><i class="fa-solid fa-bullhorn me-2"></i>Publication des résultats :</strong>
-                                {% if publication.est_publiee %}
-                                    Publiés le {{ publication.date_publication|date:"d/m/Y à H:i" }}
-                                {% else %}
-                                    Les élèves ne peuvent pas encore consulter leurs résultats.
-                                {% endif %}
+                        <div class="alert alert-info border-0 shadow-sm mb-4">
+                            <h6 class="fw-bold mb-3"><i class="fa-solid fa-bullhorn me-2"></i>Publication des résultats - {{ classe_delib.nomClasse }}</h6>
+                            <div class="row g-2">
+                                {% for item in periodes_pub %}
+                                <div class="col-md-4 col-lg-2">
+                                    <div class="card border-0 shadow-sm p-2 text-center {% if item.pub.est_publiee %}bg-success-subtle{% else %}bg-white{% endif %}">
+                                        <small class="fw-bold d-block mb-1">{{ item.obj.nomPeriode }}</small>
+                                        <form method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="classe_id" value="{{ classe_delib.pk }}">
+                                            <input type="hidden" name="periode_id" value="{{ item.obj.idPeriode }}">
+                                            {% if item.pub.est_publiee %}
+                                                <button type="submit" name="action_publication" value="retirer" class="btn btn-xs btn-outline-danger w-100 py-1" style="font-size: 0.7rem;">
+                                                    <i class="fa-solid fa-eye-slash"></i> Retirer
+                                                </button>
+                                                <div class="text-success x-small mt-1" style="font-size: 0.6rem;">
+                                                    Publié le {{ item.pub.date_publication|date:"d/m" }}
+                                                </div>
+                                            {% else %}
+                                                <button type="submit" name="action_publication" value="publier" class="btn btn-xs btn-success w-100 py-1" style="font-size: 0.7rem;">
+                                                    <i class="fa-solid fa-check"></i> Publier
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
-                            <form method="POST" class="d-flex gap-2">
-                                {% csrf_token %}
-                                {% if publication.est_publiee %}
-                                    <button type="submit" name="action_publication" value="retirer" class="btn btn-sm btn-outline-danger fw-bold">
-                                        <i class="fa-solid fa-eye-slash me-1"></i> Retirer la publication
-                                    </button>
-                                {% else %}
-                                    <button type="submit" name="action_publication" value="publier" class="btn btn-sm btn-success fw-bold">
-                                        <i class="fa-solid fa-check-circle me-1"></i> Autoriser la publication des résultats
-                                    </button>
-                                {% endif %}
-                            </form>
                         </div>
 
                         {% if deliberation_data and classe_delib %}
                         <!-- Statistiques classe -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <div class="card border-0 bg-light p-3 text-center">
-                                    <h6 class="text-muted small">Effectif</h6>
-                                    <h3 class="fw-bold text-uac-blue m-0">{{ deliberation_data.stats.total }}</h3>
+                                <div class="card border-0 shadow-sm bg-white p-3 text-center border-bottom border-primary border-3">
+                                    <h6 class="text-muted small fw-bold">EFFECTIF TOTAL</h6>
+                                    <h3 class="fw-bold text-uac-blue m-0"><i class="fa-solid fa-users me-2"></i>{{ deliberation_data.stats.total }}</h3>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card border-0 bg-success-subtle p-3 text-center">
-                                    <h6 class="text-muted small">Réussite globale</h6>
-                                    <h3 class="fw-bold text-success m-0">{{ deliberation_data.stats.reussite }} <small>({{ deliberation_data.stats.pct_reussite }}%)</small></h3>
+                                <div class="card border-0 shadow-sm bg-white p-3 text-center border-bottom border-success border-3">
+                                    <h6 class="text-muted small fw-bold">RÉUSSITE</h6>
+                                    <h3 class="fw-bold text-success m-0">{{ deliberation_data.stats.reussite }} <span class="fs-6">({{ deliberation_data.stats.pct_reussite }}%)</span></h3>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card border-0 bg-danger-subtle p-3 text-center">
-                                    <h6 class="text-muted small">Échec global</h6>
-                                    <h3 class="fw-bold text-danger m-0">{{ deliberation_data.stats.echec }} <small>({{ deliberation_data.stats.pct_echec }}%)</small></h3>
+                                <div class="card border-0 shadow-sm bg-white p-3 text-center border-bottom border-danger border-3">
+                                    <h6 class="text-muted small fw-bold">ÉCHEC</h6>
+                                    <h3 class="fw-bold text-danger m-0">{{ deliberation_data.stats.echec }} <span class="fs-6">({{ deliberation_data.stats.pct_echec }}%)</span></h3>
                                 </div>
                             </div>
                             <div class="col-md-3">
-                                <div class="card border-0 bg-warning-subtle p-3 text-center">
-                                    <h6 class="text-muted small">En attente / Partiel</h6>
+                                <div class="card border-0 shadow-sm bg-white p-3 text-center border-bottom border-warning border-3">
+                                    <h6 class="text-muted small fw-bold">EN ATTENTE</h6>
                                     <h3 class="fw-bold text-warning m-0">{{ deliberation_data.stats.attente }}</h3>
                                 </div>
                             </div>
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-sm align-middle">
-                                <thead class="table-dark">
+                            <table class="table table-hover border align-middle shadow-sm">
+                                <thead class="table-light border-bottom">
                                     <tr>
-                                        <th rowspan="2" class="align-middle">Élève</th>
-                                        <th rowspan="2" class="text-center align-middle">Situation financière</th>
-                                        {% for cours in deliberation_data.cours_list %}
-                                        <th colspan="3" class="text-center small">{{ cours.libelle|truncatechars:20 }}</th>
-                                        {% endfor %}
-                                        <th rowspan="2" class="text-center align-middle">Statut</th>
-                                        <th rowspan="2" class="text-center align-middle">Décision Jury</th>
-                                    </tr>
-                                    <tr>
-                                        {% for cours in deliberation_data.cours_list %}
-                                        <th class="text-center small">S1</th>
-                                        <th class="text-center small">S2</th>
-                                        <th class="text-center small">Ann.</th>
-                                        {% endfor %}
+                                        <th class="ps-3">Identité de l'Élève</th>
+                                        <th class="text-center">Finances</th>
+                                        <th class="text-center">Moyenne {% if periode_delib == "ANNUEL" %}Annuelle{% else %}{{ periode_delib }}{% endif %}</th>
+                                        <th class="text-center">Détails par Cours</th>
+                                        <th class="text-center">Décision Finale</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for ligne in deliberation_data.lignes %}
-                                    <tr>
-                                        <td class="fw-bold small">
-                                            {{ ligne.eleve.nom }} {{ ligne.eleve.postnom }}
-                                            <br><code class="text-muted">{{ ligne.eleve.matriculeEleve }}</code>
+                                    <tr {% if not ligne.complet %}class="table-light"{% endif %}>
+                                        <td class="ps-3">
+                                            <div class="fw-bold text-uac-blue">{{ ligne.eleve.nom }} {{ ligne.eleve.postnom }}</div>
+                                            <code class="text-muted small">{{ ligne.eleve.matriculeEleve }}</code>
                                         </td>
-                                        <td class="text-center small">
-                                            <span class="text-success fw-bold">{{ ligne.total_paye }}$</span> / {{ ligne.total_du }}$
-                                            {% if ligne.reste_a_payer > 0 %}
-                                                <br><span class="badge bg-danger">Reste {{ ligne.reste_a_payer }}$</span>
-                                            {% else %}
-                                                <br><span class="badge bg-success">En règle</span>
-                                            {% endif %}
-                                        </td>
-                                        {% for cr in ligne.cours_resultats %}
-                                        <td class="text-center small {% if cr.s1 == 'Réussi' %}table-success{% elif cr.s1 == 'Échec' %}table-danger{% endif %}">{{ cr.s1 }}</td>
-                                        <td class="text-center small {% if cr.s2 == 'Réussi' %}table-success{% elif cr.s2 == 'Échec' %}table-danger{% endif %}">{{ cr.s2 }}</td>
-                                        <td class="text-center small fw-bold {% if cr.annuel == 'Réussi' %}table-success{% elif cr.annuel == 'Échec' %}table-danger{% endif %}">{{ cr.annuel }}</td>
-                                        {% endfor %}
                                         <td class="text-center">
-                                            {% if ligne.statut_global == 'Réussi' %}
-                                                <span class="badge bg-success">Réussi</span>
-                                            {% elif ligne.statut_global == 'Échec' %}
-                                                <span class="badge bg-danger">Échec</span>
+                                            {% if ligne.reste_a_payer <= 0 %}
+                                                <i class="fa-solid fa-circle-check text-success" title="En règle"></i>
                                             {% else %}
-                                                <span class="badge bg-warning text-dark">{{ ligne.statut_global }}</span>
+                                                <span class="badge bg-danger-subtle text-danger">{{ ligne.reste_a_payer }}$</span>
                                             {% endif %}
                                         </td>
-                                        <td class="text-center" style="min-width: 200px;">
-                                            <form method="POST" class="d-flex flex-column gap-1">
+                                        <td class="text-center">
+                                            {% if ligne.complet %}
+                                                <div class="fs-5 fw-bold {% if ligne.pct >= 50 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ ligne.pct }}%
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small italic">Incomplet</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                                {% for cr in ligne.cours_resultats %}
+                                                    <span class="badge {% if cr.verdict == 'Réussi' %}bg-success{% elif cr.verdict == 'Échec' %}bg-danger{% else %}bg-secondary{% endif %}" 
+                                                          style="width: 12px; height: 12px; padding: 0;" title="{{ cr.cours.libelle }}: {{ cr.verdict }}"></span>
+                                                {% endfor %}
+                                            </div>
+                                        </td>
+                                        <td class="text-center" style="min-width: 250px;">
+                                            <form method="POST" class="row g-1 align-items-center">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="decision_jury" value="1">
                                                 <input type="hidden" name="matricule_eleve" value="{{ ligne.eleve.matriculeEleve }}">
                                                 <input type="hidden" name="classe_id" value="{{ classe_delib.pk }}">
-                                                <select name="decision" class="form-select form-select-sm">
-                                                    {% for val, label in decisions_jury_choices %}
-                                                    <option value="{{ val }}" {% if ligne.decision_jury and ligne.decision_jury.decision == val %}selected{% endif %}>{{ label }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                                <input type="text" name="commentaire" class="form-control form-control-sm" placeholder="Commentaire..." value="{{ ligne.decision_jury.commentaire|default:'' }}">
-                                                <button type="submit" class="btn btn-sm btn-primary fw-bold">Enregistrer</button>
+                                                <div class="col-8">
+                                                    <select name="decision" class="form-select form-select-sm fw-bold">
+                                                        {% for val, label in decisions_jury_choices %}
+                                                        <option value="{{ val }}" {% if ligne.decision_jury and ligne.decision_jury.decision == val %}selected{% endif %}>{{ label }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="col-4">
+                                                    <button type="submit" class="btn btn-sm btn-primary w-100 fw-bold">OK</button>
+                                                </div>
+                                                <div class="col-12 mt-1">
+                                                    <input type="text" name="commentaire" class="form-control form-control-sm" placeholder="Note du jury..." value="{{ ligne.decision_jury.commentaire|default:'' }}">
+                                                </div>
                                             </form>
                                         </td>
                                     </tr>
@@ -848,31 +865,45 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const urlParams = new URLSearchParams(window.location.search);
-        let targetMainTabId = window.location.hash; // Commence avec le hachage explicite de l'URL
+        let targetMainTabId = window.location.hash;
 
-        // Priorité aux paramètres d'URL pour déterminer le panneau principal si aucun hachage direct n'est présent
+        // 1. Déterminer l'onglet à afficher
         if (!targetMainTabId) {
             if (urlParams.has('classe_id') || urlParams.has('sub')) {
                 targetMainTabId = '#config-classe-panel';
-            } else if (urlParams.has('classe_delib')) {
+            } else if (urlParams.has('classe_delib') || urlParams.has('periode_delib')) {
                 targetMainTabId = '#deliberation-panel';
+            } else if (urlParams.has('periode_id')) {
+                targetMainTabId = '#periode-panel';
+            } else {
+                // Récupérer le dernier onglet visité depuis le stockage local
+                targetMainTabId = localStorage.getItem('proviseurActiveTab') || '#communique-panel';
             }
         }
 
-        // Si aucun panneau principal n'a été déterminé par le hachage ou les paramètres, on utilise le panneau par défaut
-        if (!targetMainTabId) {
-            targetMainTabId = '#communique-panel'; // Le panneau "Vue d'ensemble" est le défaut
+        // 2. Activer l'onglet
+        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetMainTabId}"]`);
+        if (tabTriggerEl) {
+            const tab = new bootstrap.Tab(tabTriggerEl);
+            tab.show();
         }
 
-        // Active le panneau principal déterminé
-        const mainTabTriggerEl = document.querySelector(`button[data-bs-target="${targetMainTabId}"]`);
-        if (mainTabTriggerEl) {
-            const mainTab = new bootstrap.Tab(mainTabTriggerEl);
-            mainTab.show();
-        }
+        // 3. Écouter les changements d'onglets pour les sauvegarder
+        const allTabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        allTabButtons.forEach(btn => {
+            btn.addEventListener('shown.bs.tab', function (event) {
+                const target = event.target.getAttribute('data-bs-target');
+                localStorage.setItem('proviseurActiveTab', target);
+                // Mettre à jour le hash sans recharger pour la navigation historique
+                if (history.pushState) {
+                    history.pushState(null, null, target);
+                } else {
+                    location.hash = target;
+                }
+            });
+        });
 
-        // Gère spécifiquement les sous-onglets si le panneau de configuration scolaire est actif
-
+        // 4. Gestion spécifique des sous-onglets (Configuration)
         if (targetMainTabId === '#config-classe-panel') {
             const subType = urlParams.get('sub');
             let subTarget = '#sub-classes-tab'; // Par défaut

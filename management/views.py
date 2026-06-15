@@ -36,6 +36,7 @@ from .utils import (
     build_ligne_bulletin,
     build_suivi_classe,
     calculer_moyenne_semestre,
+    PERIODE_ACCES,
     get_cours_classe,
     get_situation_financiere,
 )
@@ -162,8 +163,12 @@ def deconnexion_utilisateur(request):
 def dashboard_eleve(request):
     eleve = get_object_or_404(Eleve, user=request.user)
     fin = get_situation_financiere(eleve)
-    publication = PublicationResultats.get_instance()
-    resultats_publies = publication.est_publiee
+    
+    # Récupération des codes des périodes publiées pour la classe de l'élève
+    periodes_publiees = set(
+        PublicationResultats.objects.filter(classe=eleve.classe, est_publiee=True).values_list('periode__code', flat=True)
+    )
+    periodes_publiees = {code.upper() for code in periodes_publiees}
 
     paiements_liste = Paiement.objects.filter(eleve=eleve).order_by("-date")
     paiements_chronologiques = list(
@@ -214,12 +219,12 @@ def dashboard_eleve(request):
     bulletin_s2 = []
     s2_toutes_cotes = True
     manquants_s2 = []
-    p_stats = {k: {'pts': 0, 'max': 0, 'complet': True} for k in ["P1", "P2", "EX1", "P3", "P4", "EX2"]}
+    p_stats = {k: {'pts': 0, 'max': 0, 'complet': True, 'visible': False} for k in ["P1", "P2", "EX1", "P3", "P4", "EX2"]}
 
     for c in cours_eleve:
         # --- TRAITEMENT SEMESTRE 1 ---
         p_data_s1, tot_s1, verd_s1, comp_s1 = build_ligne_bulletin(
-            c, dict_cotes, fin, ["P1", "P2", "EX1"], resultats_publies
+            c, dict_cotes, fin, ["P1", "P2", "EX1"], periodes_publiees
         )
         for p_code in ["P1", "P2", "EX1"]:
             raw_note = dict_cotes.get(f"{c.idCours}_{p_code}")
@@ -230,7 +235,6 @@ def dashboard_eleve(request):
                 p_stats[p_code]['complet'] = False
                 if periodes_status.get(p_code) in ['ACTIVE', 'CLOTUREE']:
                     s1_toutes_cotes = False
-                    manquants_s1.append(f"Attention : Calcul de moyenne suspendu. Vous manquez une cote sur : {c.libelle} ({p_code})")
 
         if any(p_data_s1[p]["existe"] for p in ["p1", "p2", "ex1"]):
             bulletin_s1.append({
@@ -241,7 +245,7 @@ def dashboard_eleve(request):
         # --- TRAITEMENT SEMESTRE 2 ---
         if afficher_s2:
             p_data_s2, tot_s2, verd_s2, comp_s2 = build_ligne_bulletin(
-                c, dict_cotes, fin, ["P3", "P4", "EX2"], resultats_publies
+                c, dict_cotes, fin, ["P3", "P4", "EX2"], periodes_publiees
             )
             for p_code in ["P3", "P4", "EX2"]:
                 raw_note = dict_cotes.get(f"{c.idCours}_{p_code}")
@@ -252,7 +256,6 @@ def dashboard_eleve(request):
                     p_stats[p_code]['complet'] = False
                     if periodes_status.get(p_code) in ['ACTIVE', 'CLOTUREE']:
                         s2_toutes_cotes = False
-                        manquants_s2.append(f"Attention : Calcul de moyenne suspendu. Vous manquez une cote sur : {c.libelle} ({p_code})")
 
             if any(p_data_s2[p]["existe"] for p in ["p3", "p4", "ex2"]):
                 bulletin_s2.append({
@@ -260,65 +263,101 @@ def dashboard_eleve(request):
                     "total_obtenu": tot_s2, "verdict": verd_s2,
                 })
 
+    if not s1_toutes_cotes:
+        manquants_s1.append("Attention : Calcul de moyenne suspendu. Vous manquez une cote sur certains cours.")
+    if afficher_s2 and not s2_toutes_cotes:
+        manquants_s2.append("Attention : Calcul de moyenne suspendu. Vous manquez une cote sur certains cours.")
+
     decision_jury = DecisionJury.objects.filter(
         eleve=eleve, classe=eleve.classe
     ).first()
 
-    # Calcul final des pourcentages par période (DOIT ÊTRE FAIT AVANT LA LOGIQUE D'AFFICHAGE DYNAMIQUE)
-    for s_info in p_stats.values():
-        if s_info['max'] > 0:
+    # Calcul final des pourcentages par période avec vérification stricte
+    for p_code, s_info in p_stats.items():
+        acces_key = PERIODE_ACCES.get(p_code)
+        has_fin = fin.get(acces_key, False) if acces_key else False
+        
+        if p_code in periodes_publiees and has_fin and s_info['max'] > 0:
             s_info['pct'] = round((s_info['pts'] / s_info['max'] * 100), 1)
+            s_info['visible'] = True
+        else:
+            s_info['pct'] = None
+            s_info['visible'] = False
 
     # --- LOGIQUE D'AFFICHAGE DYNAMIQUE (SEMESTRE 1) ---
     pts_s1_total = sum(p_stats[k]['pts'] for k in ["P1", "P2", "EX1"])
     max_s1_total = sum(p_stats[k]['max'] for k in ["P1", "P2", "EX1"])
     
-    moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max, moy_s1_label = 0, 0, 0, ""
+    # Publication S1 : Vrai si l'examen (EX1) est publié
+    s1_publie = "EX1" in periodes_publiees
 
-    if not resultats_publies:
-        moy_s1_label = "RÉSULTATS NON DISPONIBLES"
-    else:
-        # Si l'examen est fini et complet
-        if p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0 and fin['acces_ex1']:
+    moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max, moy_s1_label = None, None, None, ""
+
+    if s1_publie:
+        if not fin['acces_ex1']:
+            moy_s1_label = "Veuillez passer à la comptabilité"
+        elif p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0:
             moy_s1_disp_pct = round((pts_s1_total / max_s1_total * 100), 1)
             moy_s1_disp_pts, moy_s1_disp_max = pts_s1_total, max_s1_total
             moy_s1_label = "MOYENNE GÉNÉRALE S1"
-        # Sinon, on affiche le pourcentage de la période P2 si elle est en cours
-        elif p_stats['P2']['complet'] and p_stats['P2']['max'] > 0 and fin['acces_p2']:
-            moy_s1_disp_pct = p_stats['P2']['pct']
-            moy_s1_disp_pts, moy_s1_disp_max = p_stats['P2']['pts'], p_stats['P2']['max']
-            moy_s1_label = "POURCENTAGE P2"
-        # Sinon, P1
-        elif p_stats['P1']['complet'] and p_stats['P1']['max'] > 0 and fin['acces_p1']:
-            moy_s1_disp_pct = p_stats['P1']['pct']
-            moy_s1_disp_pts, moy_s1_disp_max = p_stats['P1']['pts'], p_stats['P1']['max']
-            moy_s1_label = "POURCENTAGE P1"
         else:
             moy_s1_label = "MOYENNE SUSPENDUE"
+    else:
+        if "P2" in periodes_publiees:
+            if not fin['acces_p2']:
+                moy_s1_label = "Veuillez passer à la comptabilité"
+            elif p_stats['P2']['complet'] and p_stats['P2']['max'] > 0:
+                moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max = p_stats['P2']['pct'], p_stats['P2']['pts'], p_stats['P2']['max']
+                moy_s1_label = "POURCENTAGE P2"
+            else:
+                moy_s1_label = "MOYENNE SUSPENDUE"
+        elif "P1" in periodes_publiees:
+            if not fin['acces_p1']:
+                moy_s1_label = "Veuillez passer à la comptabilité"
+            elif p_stats['P1']['complet'] and p_stats['P1']['max'] > 0:
+                moy_s1_disp_pct, moy_s1_disp_pts, moy_s1_disp_max = p_stats['P1']['pct'], p_stats['P1']['pts'], p_stats['P1']['max']
+                moy_s1_label = "POURCENTAGE P1"
+            else:
+                moy_s1_label = "MOYENNE SUSPENDUE"
+        else:
+            moy_s1_label = "RÉSULTATS NON DISPONIBLES"
 
     # --- LOGIQUE D'AFFICHAGE DYNAMIQUE (SEMESTRE 2) ---
     pts_s2_total = sum(p_stats[k]['pts'] for k in ["P3", "P4", "EX2"])
     max_s2_total = sum(p_stats[k]['max'] for k in ["P3", "P4", "EX2"])
     
-    moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max, moy_s2_label = 0, 0, 0, ""
+    s2_publie = "EX2" in periodes_publiees
 
-    if not resultats_publies:
-        moy_s2_label = "RÉSULTATS NON DISPONIBLES"
-    else:
-        if p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0 and fin['acces_s2']:
+    moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max, moy_s2_label = None, None, None, ""
+
+    if s2_publie:
+        if not fin['acces_s2']:
+            moy_s2_label = "Veuillez passer à la comptabilité"
+        elif p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0:
             moy_s2_disp_pct = round((pts_s2_total / max_s2_total * 100), 1)
             moy_s2_disp_pts, moy_s2_disp_max = pts_s2_total, max_s2_total
             moy_s2_label = "MOYENNE GÉNÉRALE S2"
-        elif p_stats['P4']['complet'] and p_stats['P4']['max'] > 0 and fin['acces_s2']:
-            moy_s2_disp_pct = p_stats['P4']['pct']
-            moy_s2_disp_pts, moy_s2_disp_max = p_stats['P4']['pts'], p_stats['P4']['max']
-            moy_s2_label = "POURCENTAGE P4"
-        elif p_stats['P3']['complet'] and p_stats['P3']['max'] > 0 and fin['acces_s2']:
-            moy_s2_disp_pct = p_stats['P3']['pct']
-            moy_s2_disp_pts, moy_s2_disp_max = p_stats['P3']['pts'], p_stats['P3']['max']
-            moy_s2_label = "POURCENTAGE P3"
         else:
             moy_s2_label = "MOYENNE SUSPENDUE"
+    else:
+        if "P4" in periodes_publiees:
+            if not fin['acces_s2']:
+                moy_s2_label = "Veuillez passer à la comptabilité"
+            elif p_stats['P4']['complet'] and p_stats['P4']['max'] > 0:
+                moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max = p_stats['P4']['pct'], p_stats['P4']['pts'], p_stats['P4']['max']
+                moy_s2_label = "POURCENTAGE P4"
+            else:
+                moy_s2_label = "MOYENNE SUSPENDUE"
+        elif "P3" in periodes_publiees:
+            if not fin['acces_s2']:
+                moy_s2_label = "Veuillez passer à la comptabilité"
+            elif p_stats['P3']['complet'] and p_stats['P3']['max'] > 0:
+                moy_s2_disp_pct, moy_s2_disp_pts, moy_s2_disp_max = p_stats['P3']['pct'], p_stats['P3']['pts'], p_stats['P3']['max']
+                moy_s2_label = "POURCENTAGE P3"
+            else:
+                moy_s2_label = "MOYENNE SUSPENDUE"
+        else:
+            moy_s2_label = "RÉSULTATS NON DISPONIBLES"
 
     s1_complet = s1_toutes_cotes
     s2_complet = s2_toutes_cotes
@@ -334,11 +373,11 @@ def dashboard_eleve(request):
         "afficher_s2": afficher_s2,
         "s1_toutes_cotes": s1_toutes_cotes,
         "s2_toutes_cotes": s2_toutes_cotes,
-        "autorise_p1": fin["acces_p1"] and resultats_publies,
-        "autorise_p2": fin["acces_p2"] and resultats_publies,
-        "autorise_ex1": fin["acces_ex1"] and resultats_publies,
-        "autorise_s2": fin["acces_s2"] and resultats_publies,
-        "resultats_publies": resultats_publies,
+        "autorise_p1": fin["acces_p1"] and ("P1" in periodes_publiees),
+        "autorise_p2": fin["acces_p2"] and ("P2" in periodes_publiees),
+        "autorise_ex1": fin["acces_ex1"] and ("EX1" in periodes_publiees),
+        "autorise_s2": fin["acces_s2"] and ("EX2" in periodes_publiees),
+        "resultats_publies": bool(periodes_publiees),
         "decision_jury": decision_jury,
         "moy_s1_pct": moy_s1_disp_pct,
         "moy_s1_pts": moy_s1_disp_pts,
@@ -480,24 +519,27 @@ def dashboard_proviseur(request):
 
     # C. Publication / retrait des résultats
     if request.method == "POST" and "action_publication" in request.POST:
-        publication = PublicationResultats.get_instance()
-        if request.POST.get("action_publication") == "publier":
-            publication.est_publiee = True
-            publication.date_publication = timezone.now()
-            publication.publie_par = request.user
-            publication.save()
-            messages.success(
-                request,
-                "Les résultats sont maintenant publiés. Les élèves peuvent les consulter selon leur situation financière.",
-            )
+        classe_id = request.POST.get("classe_id")
+        periode_id = request.POST.get("periode_id")
+        action = request.POST.get("action_publication")
+        
+        classe_obj = get_object_or_404(Classe, pk=classe_id)
+        periode_obj = get_object_or_404(Periode, idPeriode=periode_id)
+        
+        pub, _ = PublicationResultats.objects.get_or_create(classe=classe_obj, periode=periode_obj)
+        
+        if action == "publier":
+            pub.est_publiee = True
+            pub.date_publication = timezone.now()
+            pub.publie_par = request.user
+            msg = f"Résultats {periode_obj.nomPeriode} publiés pour {classe_obj.nomClasse}."
         else:
-            publication.est_publiee = False
-            publication.save()
-            messages.warning(
-                request,
-                "Publication des résultats retirée. Les élèves ne peuvent plus voir leurs notes.",
-            )
-        return redirect("/management/proviseur/#deliberation-panel")
+            pub.est_publiee = False
+            msg = f"Publication des résultats {periode_obj.nomPeriode} retirée pour {classe_obj.nomClasse}."
+        
+        pub.save()
+        messages.success(request, msg)
+        return redirect(f"/management/proviseur/?classe_delib={classe_id}#deliberation-panel")
 
     # D. Décision du jury
     if request.method == "POST" and "decision_jury" in request.POST:
@@ -563,7 +605,7 @@ def dashboard_proviseur(request):
     toutes_les_classes = Classe.objects.all()
     tous_enseignants = Enseignant.objects.all().order_by("nom")
     periodes = Periode.objects.all().order_by("idPeriode")
-    publication = PublicationResultats.get_instance()
+
     fiches_soumises = CentralisationClasse.objects.select_related(
         "classe", "titulaire"
     ).order_by("-date_soumission")
@@ -579,6 +621,7 @@ def dashboard_proviseur(request):
     )
 
     classe_delib_id = request.GET.get("classe_delib")
+    periode_delib = request.GET.get("periode_delib", "ANNUEL")
     classe_delib = (
         toutes_les_classes.filter(pk=classe_delib_id).first()
         if classe_delib_id
@@ -588,11 +631,22 @@ def dashboard_proviseur(request):
     deliberation_data = None
     decisions_map = {}
     if classe_delib:
-        deliberation_data = build_deliberation_classe(classe_delib)
+        codes_periodes = None if periode_delib == "ANNUEL" else [periode_delib]
+        deliberation_data = build_deliberation_classe(classe_delib, codes_periodes)
         decisions = DecisionJury.objects.filter(classe=classe_delib)
         decisions_map = {d.eleve_id: d for d in decisions}
         for ligne in deliberation_data["lignes"]:
             ligne["decision_jury"] = decisions_map.get(ligne["eleve"].matriculeEleve)
+
+        # État de publication par période pour la classe délibérée
+        publications_classe = PublicationResultats.objects.filter(classe=classe_delib)
+        pub_map = {p.periode_id: p for p in publications_classe}
+        periodes_pub = []
+        for p in periodes:
+            periodes_pub.append({
+                'obj': p,
+                'pub': pub_map.get(p.idPeriode)
+            })
 
     cours_de_la_classe = []
     if classe_sel:
@@ -612,13 +666,14 @@ def dashboard_proviseur(request):
         "classe_delib": classe_delib,
         "cours_de_la_classe": cours_de_la_classe,
         "periodes": periodes,
+        "periode_delib": periode_delib,
         "total_eleves": Eleve.objects.count(),
         "total_enseignants": tous_enseignants.count(),
         "total_classes": toutes_les_classes.count(),
         "total_options": Option.objects.count(),
         "fiches_soumises": fiches_soumises,
         "fiches_avec_suivi": fiches_avec_suivi,
-        "publication": publication,
+        "periodes_pub": periodes_pub if classe_delib else [],
         "deliberation_data": deliberation_data,
         "decisions_jury_choices": DecisionJury.DECISION_CHOICES,
     }
@@ -662,6 +717,17 @@ def espace_titulaire(request):
         return redirect("home")
 
     suivi_data = build_suivi_classe(classe_titulaire)
+    
+    # Délibération pour le titulaire
+    periode_delib = request.GET.get('periode_delib', 'ANNUEL')
+    codes_periodes = None if periode_delib == 'ANNUEL' else [periode_delib]
+    deliberation_data = build_deliberation_classe(classe_titulaire, codes_periodes)
+    
+    decisions = DecisionJury.objects.filter(classe=classe_titulaire)
+    decisions_map = {d.eleve_id: d for d in decisions}
+    for ligne in deliberation_data["lignes"]:
+        ligne["decision_jury"] = decisions_map.get(ligne["eleve"].matriculeEleve)
+
     suivi_eleves = suivi_data["suivi_eleves"]
     nombre_total_cours = suivi_data["nombre_total_cours"]
 
@@ -707,6 +773,10 @@ def espace_titulaire(request):
         ),
         "attributions_classe": attributions_classe,
         "centralisation": centralisation,
+        "deliberation_data": deliberation_data,
+        "periode_delib": periode_delib,
+        "periodes": Periode.objects.all().order_by('idPeriode'),
+        "decisions_jury_choices": DecisionJury.DECISION_CHOICES,
     }
     return render(request, "management/espace_titulaire.html", context)
 

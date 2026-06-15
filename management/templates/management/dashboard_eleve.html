@@ -187,9 +187,9 @@
                         <div>
                             <h4 class="mb-0 fw-bold text-uac">PREMIER SEMESTRE</h4>
                             <div class="mt-1 d-flex gap-2">
-                                <span class="badge {% if p_stats.P1.complet %}bg-info{% else %}bg-light text-muted border{% endif %}">P1: {% if p_stats.P1.complet %}{{ p_stats.P1.pct }}%{% else %}encours{% endif %}</span>
-                                <span class="badge {% if p_stats.P2.complet %}bg-info{% else %}bg-light text-muted border{% endif %}">P2: {% if p_stats.P2.complet %}{{ p_stats.P2.pct }}%{% else %}encours{% endif %}</span>
-                                <span class="badge {% if p_stats.EX1.complet %}bg-warning text-dark{% else %}bg-light text-muted border{% endif %}">EX1: {% if p_stats.EX1.complet %}{{ p_stats.EX1.pct }}%{% else %}encours{% endif %}</span>
+                                <span class="badge {% if p_stats.P1.visible %}bg-info{% else %}bg-light text-muted border{% endif %}">P1: {% if p_stats.P1.visible %}{{ p_stats.P1.pct }}%{% else %}<i class="fas fa-lock"></i>{% endif %}</span>
+                                <span class="badge {% if p_stats.P2.visible %}bg-info{% else %}bg-light text-muted border{% endif %}">P2: {% if p_stats.P2.visible %}{{ p_stats.P2.pct }}%{% else %}<i class="fas fa-lock"></i>{% endif %}</span>
+                                <span class="badge {% if p_stats.EX1.visible %}bg-warning text-dark{% else %}bg-light text-muted border{% endif %}">EX1: {% if p_stats.EX1.visible %}{{ p_stats.EX1.pct }}%{% else %}<i class="fas fa-lock"></i>{% endif %}</span>
                             </div>
                         </div>
                     </div>

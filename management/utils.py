@@ -122,7 +122,7 @@ def _note_affichee(raw, existe, resultats_publies, has_acces_financier):
     return raw, True
 
 
-def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, resultats_publies):
+def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, periodes_publiees):
     max_p = cours.max.maxima
     max_ex = max_p * 2
     periodes_data = {}
@@ -133,8 +133,9 @@ def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, resultats_publi
         existe = raw != '-'
         acces_key = PERIODE_ACCES[code]
         has_acces = fin.get(acces_key, False)
+        is_publie = code.upper() in periodes_publiees
 
-        note_affichee, autorise = _note_affichee(raw, existe, resultats_publies, has_acces)
+        note_affichee, autorise = _note_affichee(raw, existe, is_publie, has_acces)
         reussi = None
         if autorise and isinstance(raw, (int, float)):
             reussi = raw >= (max_val / 2)
@@ -148,11 +149,14 @@ def build_ligne_bulletin(cours, dict_cotes, fin, codes_periodes, resultats_publi
         }
 
     obtenu, total_max, verdict, complet = calculer_bilan_cours(cours, dict_cotes, codes_periodes)
+    
+    # Pour le total du bloc, on vérifie si toutes les périodes concernées sont publiées
+    all_published = all(c.upper() in periodes_publiees for c in codes_periodes)
 
     if not complet:
         total_affiche = '-'
         verdict_final = 'En attente'
-    elif not resultats_publies:
+    elif not all_published:
         total_affiche = 'Masqué'
         verdict_final = 'Masqué'
     elif not all(fin.get(PERIODE_ACCES[c], False) for c in codes_periodes):
@@ -200,7 +204,10 @@ def build_suivi_classe(classe):
     }
 
 
-def build_deliberation_classe(classe):
+def build_deliberation_classe(classe, codes_periodes=None):
+    if codes_periodes is None:
+        codes_periodes = ['P1', 'P2', 'EX1', 'P3', 'P4', 'EX2']
+
     cours_list = list(get_cours_classe(classe))
     eleves = list(Eleve.objects.filter(classe=classe).order_by('nom', 'postnom'))
 
@@ -208,35 +215,33 @@ def build_deliberation_classe(classe):
     nb_reussite = 0
     nb_echec = 0
     nb_attente = 0
+    nb_partiel = 0
 
     for eleve in eleves:
         dict_cotes = build_dict_cotes(eleve)
         cours_resultats = []
-        cours_reussis = 0
-        cours_echoues = 0
-        cours_attente = 0
+        cours_reussis, cours_echoues, cours_attente = 0, 0, 0
+        total_points, total_max = 0, 0
+        complet = True
 
         for cours in cours_list:
-            _, _, verdict_s1, complet_s1 = calculer_bilan_cours(cours, dict_cotes, ['P1', 'P2', 'EX1'])
-            _, _, verdict_s2, complet_s2 = calculer_bilan_cours(cours, dict_cotes, ['P3', 'P4', 'EX2'])
-            _, _, verdict_annuel, complet_annuel = calculer_bilan_cours(
-                cours, dict_cotes, ['P1', 'P2', 'EX1', 'P3', 'P4', 'EX2']
-            )
-
-            cours_resultats.append({
-                'cours': cours,
-                's1': verdict_s1 if complet_s1 else '—',
-                's2': verdict_s2 if complet_s2 else '—',
-                'annuel': verdict_annuel if complet_annuel else 'En attente',
-            })
-
-            if complet_annuel:
-                if verdict_annuel == 'Réussi':
+            pts, mmax, verdict, ok = calculer_bilan_cours(cours, dict_cotes, codes_periodes)
+            if ok:
+                total_points += pts
+                total_max += mmax
+                if verdict == 'Réussi':
                     cours_reussis += 1
                 else:
                     cours_echoues += 1
             else:
+                complet = False
                 cours_attente += 1
+
+            cours_resultats.append({
+                'cours': cours,
+                'verdict': verdict if ok else 'En attente',
+                'ok': ok,
+            })
 
         if cours_list:
             if cours_attente == len(cours_list):
@@ -250,16 +255,19 @@ def build_deliberation_classe(classe):
                 nb_echec += 1
             else:
                 statut_global = 'Partiel'
-                nb_attente += 1
+                nb_partiel += 1
         else:
             statut_global = 'En attente'
             nb_attente += 1
 
+        pct = round(total_points / total_max * 100, 1) if total_max > 0 else 0
         fin = get_situation_financiere(eleve)
         lignes.append({
             'eleve': eleve,
             'cours_resultats': cours_resultats,
             'statut_global': statut_global,
+            'pct': pct,
+            'complet': complet,
             'total_paye': fin['total_paye'],
             'total_du': fin['total_du'],
             'reste_a_payer': fin['reste_a_payer'],

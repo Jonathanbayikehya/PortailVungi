@@ -262,7 +262,9 @@ class Attribution(models.Model):
 
 class PublicationResultats(models.Model):
     """Publication globale des résultats par le proviseur."""
-    est_publiee = models.BooleanField(default=False, verbose_name="Résultats publiés")
+    classe = models.ForeignKey(Classe, on_delete=models.CASCADE, related_name='publications', null=True)
+    periode = models.ForeignKey(Periode, on_delete=models.CASCADE, related_name='publications', null=True)
+    est_publiee = models.BooleanField(default=False)
     date_publication = models.DateTimeField(null=True, blank=True)
     publie_par = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -275,14 +277,10 @@ class PublicationResultats(models.Model):
     class Meta:
         verbose_name = "Publication des résultats"
         verbose_name_plural = "Publications des résultats"
-
-    @classmethod
-    def get_instance(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+        unique_together = ('classe', 'periode')
 
     def __str__(self):
-        return "Publiés" if self.est_publiee else "Non publiés"
+        return f"{self.classe} - {self.periode} : {'Publié' if self.est_publiee else 'Non publié'}"
 
 
 class DecisionJury(models.Model):
