@@ -631,7 +631,14 @@ def dashboard_proviseur(request):
     deliberation_data = None
     decisions_map = {}
     if classe_delib:
-        codes_periodes = None if periode_delib == "ANNUEL" else [periode_delib]
+        if periode_delib == "ANNUEL":
+            codes_periodes = None
+        elif periode_delib == "S1":
+            codes_periodes = ["P1", "P2", "EX1"]
+        elif periode_delib == "S2":
+            codes_periodes = ["P3", "P4", "EX2"]
+        else:
+            codes_periodes = [periode_delib]
         deliberation_data = build_deliberation_classe(classe_delib, codes_periodes)
         decisions = DecisionJury.objects.filter(classe=classe_delib)
         decisions_map = {d.eleve_id: d for d in decisions}
@@ -720,7 +727,14 @@ def espace_titulaire(request):
     
     # Délibération pour le titulaire
     periode_delib = request.GET.get('periode_delib', 'ANNUEL')
-    codes_periodes = None if periode_delib == 'ANNUEL' else [periode_delib]
+    if periode_delib == "ANNUEL":
+        codes_periodes = None
+    elif periode_delib == "S1":
+        codes_periodes = ["P1", "P2", "EX1"]
+    elif periode_delib == "S2":
+        codes_periodes = ["P3", "P4", "EX2"]
+    else:
+        codes_periodes = [periode_delib]
     deliberation_data = build_deliberation_classe(classe_titulaire, codes_periodes)
     
     decisions = DecisionJury.objects.filter(classe=classe_titulaire)
@@ -763,6 +777,25 @@ def espace_titulaire(request):
                 SimpleNamespace(cours=cours, enseignant=cours.enseignant)
             )
 
+    # --- LOGIQUE DE SUIVI D'ENCODAGE PAR ENSEIGNANT ---
+    nb_eleves = Eleve.objects.filter(classe=classe_titulaire).count()
+    nb_periodes = Periode.objects.count() or 6
+    attendu_par_cours = nb_eleves * nb_periodes
+    suivi_attributions = []
+
+    for attr in attributions_classe:
+        c_obj = getattr(attr, 'cours', None)
+        if not c_obj: continue
+        cotes_count = Cotes.objects.filter(cours=c_obj, eleve__classe=classe_titulaire, note__isnull=False).count()
+        pct = round((cotes_count / attendu_par_cours * 100), 1) if attendu_par_cours > 0 else 0
+        suivi_attributions.append({
+            'data': attr,
+            'nb_cotes': cotes_count,
+            'attendu': attendu_par_cours,
+            'pct': pct,
+            'complet': cotes_count >= attendu_par_cours if attendu_par_cours > 0 else False
+        })
+
     context = {
         "enseignant": enseignant,
         "classe": classe_titulaire,
@@ -771,7 +804,7 @@ def espace_titulaire(request):
         "liste_eleves": Eleve.objects.filter(classe=classe_titulaire).order_by(
             "nom", "postnom"
         ),
-        "attributions_classe": attributions_classe,
+        "suivi_attributions": suivi_attributions,
         "centralisation": centralisation,
         "deliberation_data": deliberation_data,
         "periode_delib": periode_delib,

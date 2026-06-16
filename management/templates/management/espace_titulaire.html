@@ -23,15 +23,16 @@
         .sidebar-menu {
             background: var(--uac-blue);
             color: white;
-            width: 240px;
-            min-width: 240px;
-            max-width: 240px;
+            width: 240px !important;
+            min-width: 240px !important;
+            max-width: 240px !important;
             min-height: 100vh;
             flex-shrink: 0;
             padding: 15px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow-x: hidden;
         }
         .user-profile-box {
             text-align: center;
@@ -69,6 +70,7 @@
         .main-content {
             flex-grow: 1;
             min-width: 0;
+            overflow-x: hidden;
         }
         .text-uac-blue {
             color: var(--uac-blue) !important;
@@ -121,8 +123,9 @@
         }
         @media (max-width: 767.98px) {
             .sidebar-menu {
-                width: 75px;
-                min-width: 75px;
+                width: 75px !important;
+                min-width: 75px !important;
+                max-width: 75px !important;
             }
             .hide-on-mobile {
                 display: none !important;
@@ -391,7 +394,7 @@
                         <h5 class="card-title mb-0 text-uac-blue fw-bold">
                             <i class="fa-solid fa-chalkboard-user me-2"></i> ENSEIGNANTS ET COURS DE LA CLASSE
                         </h5>
-                        <span class="badge bg-uac-blue rounded-pill px-3 py-2">{{ attributions_classe|length }} Attribution(s)</span>
+                        <span class="badge bg-uac-blue rounded-pill px-3 py-2">{{ suivi_attributions|length }} Attribution(s)</span>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -400,29 +403,46 @@
                                     <tr>
                                         <th scope="col" style="width: 50px" class="text-center bg-uac-blue">N°</th>
                                         <th scope="col" class="bg-uac-blue">Enseignant</th>
-                                        <th scope="col" class="bg-uac-blue">Grade</th>
                                         <th scope="col" class="bg-uac-blue">Cours enseigné</th>
-                                        <th scope="col" class="text-center bg-uac-blue">Code</th>
+                                        <th scope="col" class="text-center bg-uac-blue">Progression</th>
+                                        <th scope="col" class="text-center bg-uac-blue">Statut</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for attr in attributions_classe %}
+                                    {% for item in suivi_attributions %}
+                                    {% with attr=item.data %}
                                     <tr>
                                         <td class="text-center"><strong>{{ forloop.counter }}</strong></td>
                                         <td class="fw-bold text-uac-blue">
                                             {% if attr.enseignant %}
                                                 {{ attr.enseignant.nom }} {{ attr.enseignant.postnom }} {{ attr.enseignant.prenom }}<br>
-                                                <small class="text-muted">{{ attr.enseignant.matriculeEns }}</small>
+                                                <small class="text-muted">{{ attr.enseignant.grade }} — {{ attr.enseignant.matriculeEns }}</small>
                                             {% else %}
                                                 <span class="badge bg-warning text-dark">Non attribué</span>
                                             {% endif %}
                                         </td>
-                                        <td>{% if attr.enseignant %}{{ attr.enseignant.grade }}{% else %}—{% endif %}</td>
-                                        <td>{{ attr.cours.libelle }}</td>
-                                        <td class="text-center"><code class="text-secondary">{{ attr.cours.code_cours }}</code></td>
+                                        <td>
+                                            <div class="fw-bold">{{ attr.cours.libelle }}</div>
+                                            <code class="text-secondary small">{{ attr.cours.code_cours }}</code>
+                                        </td>
+                                        <td class="text-center" style="width: 200px;">
+                                            <div class="progress" style="height: 12px;">
+                                                <div class="progress-bar {% if item.complet %}bg-success{% else %}bg-info{% endif %}" 
+                                                     role="progressbar" style="width: {{ item.pct }}%;"></div>
+                                            </div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">{{ item.nb_cotes }} / {{ item.attendu }} cotes</small>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.complet %}
+                                                <span class="badge bg-success rounded-pill px-3"><i class="fa-solid fa-check-double me-1"></i> En ordre</span>
+                                            {% else %}
+                                                <span class="badge bg-warning text-dark rounded-pill px-3"><i class="fa-solid fa-hourglass-half me-1"></i> Incomplet</span>
+                                            {% endif %}
+                                        </td>
                                     </tr>
+                                    {% endwith %}
                                     {% empty %}
-                                    <tr><td colspan="5" class="text-center text-muted py-4">Aucun cours attribué à cette classe pour le moment.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun cours attribué à cette classe pour le moment.</td></tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
@@ -441,6 +461,8 @@
                         <form method="GET" action="" class="d-flex align-items-center gap-2">
                             <select name="periode_delib" class="form-select form-select-sm fw-bold" onchange="this.form.submit()">
                                 <option value="ANNUEL" {% if periode_delib == "ANNUEL" %}selected{% endif %}>Bilan Annuel</option>
+                                <option value="S1" {% if periode_delib == "S1" %}selected{% endif %}>Semestre 1</option>
+                                <option value="S2" {% if periode_delib == "S2" %}selected{% endif %}>Semestre 2</option>
                                 {% for p in periodes %}
                                     <option value="{{ p.code }}" {% if periode_delib == p.code %}selected{% endif %}>{{ p.nomPeriode }}</option>
                                 {% endfor %}
@@ -454,7 +476,13 @@
                                     <tr>
                                         <th class="ps-3">Élève</th>
                                         <th class="text-center">Finances</th>
-                                        <th class="text-center">Moyenne {% if periode_delib == "ANNUEL" %}Annuelle{% else %}{{ periode_delib }}{% endif %}</th>
+                                        <th class="text-center">
+                                            Moyenne 
+                                            {% if periode_delib == "ANNUEL" %}Annuelle
+                                            {% elif periode_delib == "S1" %}Semestre 1
+                                            {% elif periode_delib == "S2" %}Semestre 2
+                                            {% else %}{{ periode_delib }}{% endif %}
+                                        </th>
                                         <th class="text-center">Cours</th>
                                         <th class="text-center">Décision Jury</th>
                                     </tr>
@@ -517,28 +545,29 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        let targetTabId = window.location.hash;
+        let targetTab = window.location.hash;
 
-        if (!targetTabId) {
-            if (urlParams.has('periode_delib')) {
-                targetTabId = '#deliberation-panel';
-            } else {
-                targetTabId = localStorage.getItem('titulaireActiveTab') || '#liste-panel';
-            }
+        // Priorité à l'action de délibération
+        if (urlParams.has('periode_delib')) {
+            targetTab = '#deliberation-panel';
         }
 
-        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetTabId}"]`);
+        // Fallback sur le localStorage ou onglet par défaut
+        if (!targetTab || !document.querySelector(`button[data-bs-target="${targetTab}"]`)) {
+            targetTab = localStorage.getItem('titulaireActiveTab') || '#liste-panel';
+        }
+
+        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetTab}"]`);
         if (tabTriggerEl) {
             const tab = new bootstrap.Tab(tabTriggerEl);
             tab.show();
         }
 
-        const allTabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
-        allTabButtons.forEach(btn => {
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
             btn.addEventListener('shown.bs.tab', function (event) {
                 const target = event.target.getAttribute('data-bs-target');
                 localStorage.setItem('titulaireActiveTab', target);
-                history.pushState(null, null, target);
+                history.replaceState(null, null, target);
             });
         });
     });

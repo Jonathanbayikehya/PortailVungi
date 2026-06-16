@@ -22,6 +22,7 @@
             display: flex;
             align-items: stretch;
             width: 100%;
+            overflow-x: hidden;
         }
 
         .sidebar-menu { 
@@ -34,13 +35,14 @@
             padding: 15px 5px;
             min-height: 100vh;
             transition: all 0.3s;
+            overflow-x: hidden;
         }
         
         @media (min-width: 768px) {
             .sidebar-menu { 
-                width: 240px; 
-                min-width: 240px; 
-                max-width: 240px;
+                width: 240px !important; 
+                min-width: 240px !important; 
+                max-width: 240px !important;
                 flex-shrink: 0;
             }
             .sidebar-menu .nav-link span { display: inline-block !important; font-size: 0.9rem; margin-top: 5px; }
@@ -711,6 +713,8 @@
                             </select>
                             <select name="periode_delib" class="form-select form-select-sm fw-bold" onchange="this.form.submit()">
                                 <option value="ANNUEL" {% if periode_delib == "ANNUEL" %}selected{% endif %}>Bilan Annuel</option>
+                                <option value="S1" {% if periode_delib == "S1" %}selected{% endif %}>Semestre 1</option>
+                                <option value="S2" {% if periode_delib == "S2" %}selected{% endif %}>Semestre 2</option>
                                 {% for p in periodes %}
                                     <option value="{{ p.code }}" {% if periode_delib == p.code %}selected{% endif %}>{{ p.nomPeriode }}</option>
                                 {% endfor %}
@@ -785,7 +789,13 @@
                                     <tr>
                                         <th class="ps-3">Identité de l'Élève</th>
                                         <th class="text-center">Finances</th>
-                                        <th class="text-center">Moyenne {% if periode_delib == "ANNUEL" %}Annuelle{% else %}{{ periode_delib }}{% endif %}</th>
+                                        <th class="text-center">
+                                            Moyenne 
+                                            {% if periode_delib == "ANNUEL" %}Annuelle
+                                            {% elif periode_delib == "S1" %}Semestre 1
+                                            {% elif periode_delib == "S2" %}Semestre 2
+                                            {% else %}{{ periode_delib }}{% endif %}
+                                        </th>
                                         <th class="text-center">Détails par Cours</th>
                                         <th class="text-center">Décision Finale</th>
                                     </tr>
@@ -865,46 +875,38 @@
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const urlParams = new URLSearchParams(window.location.search);
-        let targetMainTabId = window.location.hash;
+        let targetTab = window.location.hash;
 
-        // 1. Déterminer l'onglet à afficher
-        if (!targetMainTabId) {
-            if (urlParams.has('classe_id') || urlParams.has('sub')) {
-                targetMainTabId = '#config-classe-panel';
-            } else if (urlParams.has('classe_delib') || urlParams.has('periode_delib')) {
-                targetMainTabId = '#deliberation-panel';
-            } else if (urlParams.has('periode_id')) {
-                targetMainTabId = '#periode-panel';
-            } else {
-                // Récupérer le dernier onglet visité depuis le stockage local
-                targetMainTabId = localStorage.getItem('proviseurActiveTab') || '#communique-panel';
-            }
+        // Priorité aux actions détectées dans l'URL (GET params)
+        if (urlParams.has('classe_delib') || urlParams.has('periode_delib')) {
+            targetTab = '#deliberation-panel';
+        } else if (urlParams.has('classe_id') || urlParams.has('sub')) {
+            targetTab = '#config-classe-panel';
+        } else if (urlParams.has('periode_id')) {
+            targetTab = '#periode-panel';
+        }
+        
+        // Si pas de paramètre spécifique, on tente le localStorage, sinon défaut (Vue d'ensemble)
+        if (!targetTab || !document.querySelector(`button[data-bs-target="${targetTab}"]`)) {
+            targetTab = localStorage.getItem('proviseurActiveTab') || '#communique-panel';
         }
 
-        // 2. Activer l'onglet
-        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetMainTabId}"]`);
+        const tabTriggerEl = document.querySelector(`button[data-bs-target="${targetTab}"]`);
         if (tabTriggerEl) {
             const tab = new bootstrap.Tab(tabTriggerEl);
             tab.show();
         }
 
-        // 3. Écouter les changements d'onglets pour les sauvegarder
-        const allTabButtons = document.querySelectorAll('button[data-bs-toggle="tab"]');
-        allTabButtons.forEach(btn => {
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(btn => {
             btn.addEventListener('shown.bs.tab', function (event) {
                 const target = event.target.getAttribute('data-bs-target');
                 localStorage.setItem('proviseurActiveTab', target);
-                // Mettre à jour le hash sans recharger pour la navigation historique
-                if (history.pushState) {
-                    history.pushState(null, null, target);
-                } else {
-                    location.hash = target;
-                }
+                // Met à jour l'URL sans recharger la page
+                history.replaceState(null, null, target);
             });
         });
 
-        // 4. Gestion spécifique des sous-onglets (Configuration)
-        if (targetMainTabId === '#config-classe-panel') {
+        if (targetTab === '#config-classe-panel') {
             const subType = urlParams.get('sub');
             let subTarget = '#sub-classes-tab'; // Par défaut
             
