@@ -296,7 +296,7 @@ def dashboard_eleve(request):
     if s1_publie:
         if not fin['acces_ex1']:
             moy_s1_label = "Veuillez passer à la comptabilité"
-        elif p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0:
+        elif p_stats['P1']['complet'] and p_stats['P2']['complet'] and p_stats['EX1']['complet'] and p_stats['EX1']['max'] > 0:
             moy_s1_disp_pct = round((pts_s1_total / max_s1_total * 100), 1)
             moy_s1_disp_pts, moy_s1_disp_max = pts_s1_total, max_s1_total
             moy_s1_label = "MOYENNE GÉNÉRALE S1"
@@ -333,7 +333,7 @@ def dashboard_eleve(request):
     if s2_publie:
         if not fin['acces_s2']:
             moy_s2_label = "Veuillez passer à la comptabilité"
-        elif p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0:
+        elif p_stats['P3']['complet'] and p_stats['P4']['complet'] and p_stats['EX2']['complet'] and p_stats['EX2']['max'] > 0:
             moy_s2_disp_pct = round((pts_s2_total / max_s2_total * 100), 1)
             moy_s2_disp_pts, moy_s2_disp_max = pts_s2_total, max_s2_total
             moy_s2_label = "MOYENNE GÉNÉRALE S2"
@@ -984,6 +984,24 @@ def imprimer_bulletins(request, classe_id):
         domaine_nom = cours.domaine.nom if cours.domaine else "AUTRES"
         domaine_groups[domaine_nom].append(cours)
 
+    # Pré-calcul du classement sur TOUTE la classe pour garantir un rang exact
+    tous_les_eleves_classe = Eleve.objects.filter(classe=classe)
+    total_effectif = tous_les_eleves_classe.count()
+    global_ranking_list = []
+
+    for e_ranking in tous_les_eleves_classe:
+        res_moy = calculer_moyenne_semestre(e_ranking, ['P1', 'P2', 'EX1', 'P3', 'P4', 'EX2'])
+        # res_moy retourne (pct, pts, max, complet)
+        global_ranking_list.append({
+            "id": e_ranking.matriculeEleve,
+            "pct": res_moy[0] if res_moy[3] else 0, # On met 0 si incomplet pour le tri
+            "pts": res_moy[1]
+        })
+    
+    # Tri par pourcentage décroissant, puis points
+    global_ranking_list.sort(key=lambda x: (-x["pct"], -x["pts"]))
+    rank_map = {item["id"]: index + 1 for index, item in enumerate(global_ranking_list)}
+
     for domaine_nom, cours_items in domaine_groups.items():
         bulletin_structure.append(
             {
@@ -992,6 +1010,11 @@ def imprimer_bulletins(request, classe_id):
                 "cours": cours_items,
             }
         )
+        bulletin_structure.append({
+            "type": "domaine",
+            "label": domaine_nom.upper(),
+            "cours": cours_items,
+        })
 
     ranking_data = []
     bulletins = []
@@ -1000,10 +1023,8 @@ def imprimer_bulletins(request, classe_id):
         cotes_elev = Cotes.objects.filter(eleve=eleve).select_related(
             "cours", "periode"
         )
-        dict_cotes = {}
-        for cote in cotes_elev:
-            if cote.note is not None:
-                dict_cotes[(cote.cours.idCours, cote.periode.code)] = cote.note
+        # Utilisation de l'ID du cours pour garantir une correspondance parfaite
+        dict_cotes = {(cote.cours_id, cote.periode.code.upper()): cote.note for cote in cotes_elev if cote.note is not None}
 
         lignes = []
         total_s1_points = 0
@@ -1012,6 +1033,9 @@ def imprimer_bulletins(request, classe_id):
         total_s2_max = 0
         total_general_points = 0
         total_general_max = 0
+
+        s1_eleve_complet = True
+        s2_eleve_complet = True
 
         for bloc in bulletin_structure:
             lignes.append({"type": "domaine", "label": bloc["label"]})
@@ -1042,6 +1066,11 @@ def imprimer_bulletins(request, classe_id):
                 p3 = dict_cotes.get((cours.idCours, "P3"))
                 p4 = dict_cotes.get((cours.idCours, "P4"))
                 ex2 = dict_cotes.get((cours.idCours, "EX2"))
+
+                if p1 is None or p2 is None or ex1 is None:
+                    s1_eleve_complet = False
+                if p3 is None or p4 is None or ex2 is None:
+                    s2_eleve_complet = False
 
                 p1_points = p1 if p1 is not None else 0
                 p2_points = p2 if p2 is not None else 0
@@ -1122,12 +1151,8 @@ def imprimer_bulletins(request, classe_id):
                         "pct_ex2": round((ex2_points / max_ex) * 100, 1)
                         if ex2 is not None and max_ex
                         else None,
-                        "pct_s1": round((s1_points / s1_total_max) * 100, 1)
-                        if s1_total_max
-                        else None,
-                        "pct_s2": round((s2_points / s2_total_max) * 100, 1)
-                        if s2_total_max
-                        else None,
+                        "pct_s1": round((s1_points / s1_total_max) * 100, 1) if s1_total_max and p1 is not None and p2 is not None and ex1 is not None else None,
+                        "pct_s2": round((s2_points / s2_total_max) * 100, 1) if s2_total_max and p3 is not None and p4 is not None and ex2 is not None else None,
                     }
                 )
 
@@ -1136,31 +1161,18 @@ def imprimer_bulletins(request, classe_id):
                     "type": "subtotal",
                     "label": "Sous - Total",
                     **sous_total,
-                    "pct_s1": round(
-                        (sous_total["s1_points"] / sous_total["s1_total_max"]) * 100, 1
-                    )
-                    if sous_total["s1_total_max"]
-                    else None,
-                    "pct_s2": round(
-                        (sous_total["s2_points"] / sous_total["s2_total_max"]) * 100, 1
-                    )
-                    if sous_total["s2_total_max"]
-                    else None,
+                    "pct_p1": round((sous_total["p1_points"] / sous_total["max_p"]) * 100, 1) if sous_total["max_p"] > 0 else None,
+                    "pct_p2": round((sous_total["p2_points"] / sous_total["max_p"]) * 100, 1) if sous_total["max_p"] > 0 else None,
+                    "pct_ex1": round((sous_total["ex1_points"] / sous_total["max_ex"]) * 100, 1) if sous_total["max_ex"] > 0 else None,
+                    "pct_s1": round((sous_total["s1_points"] / sous_total["s1_total_max"]) * 100, 1) if sous_total["s1_total_max"] > 0 and s1_eleve_complet else None,
+                    "pct_p3": round((sous_total["p3_points"] / sous_total["max_p"]) * 100, 1) if sous_total["max_p"] > 0 else None,
+                    "pct_p4": round((sous_total["p4_points"] / sous_total["max_p"]) * 100, 1) if sous_total["max_p"] > 0 else None,
+                    "pct_ex2": round((sous_total["ex2_points"] / sous_total["max_ex"]) * 100, 1) if sous_total["max_ex"] > 0 else None,
+                    "pct_s2": round((sous_total["s2_points"] / sous_total["s2_total_max"]) * 100, 1) if sous_total["s2_total_max"] > 0 and s2_eleve_complet else None,
                 }
             )
 
-        moyenne_generale = (
-            round((total_general_points / total_general_max) * 100, 1)
-            if total_general_max
-            else None
-        )
-        ranking_data.append(
-            {
-                "eleve_id": eleve.matriculeEleve,
-                "points": total_general_points,
-                "moyenne": moyenne_generale or 0,
-            }
-        )
+        moyenne_generale = round((total_general_points / total_general_max) * 100, 1) if total_general_max and s1_eleve_complet and s2_eleve_complet else None
 
         decision = DecisionJury.objects.filter(eleve=eleve, classe=classe).first()
         decision_label = (
@@ -1193,33 +1205,24 @@ def imprimer_bulletins(request, classe_id):
                 "total_s2_max": total_s2_max,
                 "total_points": total_general_points,
                 "total_max": total_general_max,
-                "pct_s1": round((total_s1_points / total_s1_max) * 100, 1)
-                if total_s1_max
-                else None,
-                "pct_s2": round((total_s2_points / total_s2_max) * 100, 1)
-                if total_s2_max
-                else None,
+                "pct_p1": round((sum(dict_cotes.get((c.idCours, "P1"), 0) for c in cours_de_la_classe) / sum(c.max.maxima for c in cours_de_la_classe) * 100), 1) if total_s1_max > 0 else None,
+                "pct_p2": round((sum(dict_cotes.get((c.idCours, "P2"), 0) for c in cours_de_la_classe) / sum(c.max.maxima for c in cours_de_la_classe) * 100), 1) if total_s1_max > 0 else None,
+                "pct_ex1": round((sum(dict_cotes.get((c.idCours, "EX1"), 0) for c in cours_de_la_classe) / sum(c.max.maxima * 2 for c in cours_de_la_classe) * 100), 1) if total_s1_max > 0 else None,
+                "pct_s1": round((total_s1_points / total_s1_max) * 100, 1) if total_s1_max and s1_eleve_complet else None,
+                "pct_p3": round((sum(dict_cotes.get((c.idCours, "P3"), 0) for c in cours_de_la_classe) / sum(c.max.maxima for c in cours_de_la_classe) * 100), 1) if total_s2_max > 0 else None,
+                "pct_p4": round((sum(dict_cotes.get((c.idCours, "P4"), 0) for c in cours_de_la_classe) / sum(c.max.maxima for c in cours_de_la_classe) * 100), 1) if total_s2_max > 0 else None,
+                "pct_ex2": round((sum(dict_cotes.get((c.idCours, "EX2"), 0) for c in cours_de_la_classe) / sum(c.max.maxima * 2 for c in cours_de_la_classe) * 100), 1) if total_s2_max > 0 else None,
+                "pct_s2": round((total_s2_points / total_s2_max) * 100, 1) if total_s2_max and s2_eleve_complet else None,
                 "moy_general": f"{moyenne_generale:.1f}%"
                 if moyenne_generale is not None
                 else "-",
                 "moy_general_value": moyenne_generale,
                 "apprec_general": apprec_general,
                 "decision_jury": decision_label,
+                "rang": rank_map.get(eleve.matriculeEleve),
+                "effectif": total_effectif,
             }
         )
-
-    ranking_sorted = sorted(
-        ranking_data,
-        key=lambda item: (-item["points"], -item["moyenne"], item["eleve_id"]),
-    )
-    rank_map = {
-        item["eleve_id"]: index + 1 for index, item in enumerate(ranking_sorted)
-    }
-    total_eleves = len(ranking_sorted)
-
-    for bulletin in bulletins:
-        bulletin["rang"] = rank_map.get(bulletin["eleve"].matriculeEleve)
-        bulletin["effectif"] = total_eleves
 
     context = {
         "bulletins": bulletins,

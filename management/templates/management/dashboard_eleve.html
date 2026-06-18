@@ -439,7 +439,9 @@
                                 <!-- Total S2 -->
                                 <td class="text-center fw-bold bg-light">
                                     {% if s2_complet and autorise_s2 %}
-                                        {{ ligne.total_obtenu }}
+                                        <span class="text-uac">
+                                            {{ ligne.total_obtenu }}
+                                        </span>
                                     {% else %}
                                         <span class="text-muted small" style="font-size: 0.8rem; font-style: italic;">Masqué</span>
                                     {% endif %}
