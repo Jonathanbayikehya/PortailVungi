@@ -5,5 +5,5 @@ class ManagementConfig(AppConfig):
     name = 'management'
 
     def ready(self):
-        # Cette ligne est cruciale pour activer le signal automatique
-        import management.models
+        # On importe le fichier des signaux pour que l'envoi de SMS s'active
+        import management.signals

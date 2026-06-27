@@ -7,6 +7,11 @@ Optimized for deployment on PythonAnywhere with SQLite.
 
 import os
 from pathlib import Path
+import mimetypes
+
+# Correction des types MIME pour Windows
+mimetypes.add_type("text/css", ".css", True)
+mimetypes.add_type("text/javascript", ".js", True)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -18,15 +23,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-key-portail-vungi')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# En production, DEBUG passe automatiquement à False si la variable d'environnement n'est pas définie sur 'True'
-DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
+# CORRECTION SÉCURISÉE DU DEBUG : En local sur ton PC, il sera à True. 
+# En ligne sur PythonAnywhere, il te suffira de créer une variable d'environnement DJANGO_DEBUG='False'
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
 
-# Hôtes autorisés : inclut localhost pour votre PC et votre adresse PythonAnywhere
+# Hôtes autorisés
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
-    'kakulejonathan.pythonanywhere.com',  # Remplacez par votre nom d'utilisateur PythonAnywhere exact
+    'kakulejonathan.pythonanywhere.com',
 ]
 
 
@@ -39,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'management',
+    'management',  # Ton application principale
 ]
 
 MIDDLEWARE = [
@@ -57,7 +62,7 @@ ROOT_URLCONF = 'vungi_portal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'], # Recommandé si tu as un dossier templates global
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -114,13 +119,19 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# =========================================================================
+# CONFIGURATION DES FICHIERS STATIQUES CORRIGÉE POUR LE DESIGN DE L'ADMIN
+# =========================================================================
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-# Dossier où Django va rassembler tous les fichiers statiques lors du déploiement (collectstatic)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Dossier où Django va chercher tes fichiers statiques personnalisés en local
+STATICFILES_DIRS = [
+    BASE_DIR / 'staticfiles',
+]
+
+# Dossier final utilisé par PythonAnywhere lors du collectstatic
+STATIC_ROOT = BASE_DIR / 'production_staticfiles'
 
 
 # Redirection d'authentification

@@ -1,0 +1,438 @@
+:root {
+    --uac-blue: #003366;
+    --uac-gold: #FFCC00;
+    --uac-dark: #002244;
+    --uac-light: #f4f7f6;
+    --uac-blue-soft: #e6eef5;
+}
+
+body.vungi-body {
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    background-color: var(--uac-light);
+    color: #333;
+}
+
+h1, h2, h3, h4, h5, .vungi-title {
+    font-family: 'Montserrat', 'Segoe UI', sans-serif;
+    color: var(--uac-blue);
+}
+
+.text-uac { color: var(--uac-blue) !important; }
+.bg-uac { background-color: var(--uac-blue) !important; }
+.border-uac { border-color: var(--uac-blue) !important; }
+
+.btn-uac {
+    background-color: var(--uac-blue);
+    color: #fff;
+    font-weight: 700;
+    border: none;
+}
+.btn-uac:hover { background-color: var(--uac-dark); color: #fff; }
+
+.btn-gold {
+    background-color: var(--uac-gold);
+    color: var(--uac-blue);
+    font-weight: 700;
+    border: none;
+}
+.btn-gold:hover { background-color: #e6b800; color: var(--uac-dark); }
+
+.vungi-topbar {
+    background: var(--uac-blue);
+    color: #fff;
+    border-bottom: 3px solid var(--uac-gold);
+    font-size: 0.85rem;
+}
+
+.vungi-navbar {
+    background: #fff !important;
+    box-shadow: 0 2px 12px rgba(0,51,102,0.1);
+}
+
+.vungi-navbar .nav-link {
+    color: var(--uac-dark) !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+.vungi-navbar .nav-link:hover,
+.vungi-navbar .nav-link.active {
+    color: var(--uac-blue) !important;
+}
+
+.vungi-card {
+    background: #fff;
+    border: none;
+    border-top: 4px solid var(--uac-gold);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,51,102,0.08);
+}
+
+.vungi-sidebar {
+    background: var(--uac-blue);
+    color: #fff;
+    min-height: 100vh;
+}
+.vungi-sidebar .nav-link.active {
+    background: var(--uac-gold) !important;
+    color: var(--uac-blue) !important;
+    font-weight: 700;
+}
+
+.vungi-footer {
+    background: linear-gradient(180deg, var(--uac-dark) 0%, #001a33 100%);
+    border-top: 5px solid var(--uac-gold);
+    color: #fff;
+}
+
+.vungi-hero-overlay {
+    background: linear-gradient(135deg, rgba(0,51,102,0.88) 0%, rgba(0,34,68,0.75) 100%);
+}
+
+.section-institut {
+    background: linear-gradient(180deg, #fff 0%, var(--uac-blue-soft) 100%);
+}
+
+.badge-uac { background: var(--uac-blue); color: #fff; }
+.badge-gold { background: var(--uac-gold); color: var(--uac-dark); }
+
+/* ============================================
+   RESPONSIVITÉ - MEDIA QUERIES
+   ============================================ */
+
+/* Tablettes et écrans moyens (768px - 991px) */
+@media (max-width: 991.98px) {
+    .vungi-navbar .nav-link {
+        font-size: 0.8rem;
+    }
+    
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .display-6 {
+        font-size: 2rem;
+    }
+    
+    /* Ajustement des espacements */
+    .py-5 {
+        padding-top: 3rem !important;
+        padding-bottom: 3rem !important;
+    }
+    
+    /* Hero section plus compacte */
+    .hero-slide {
+        min-height: 60vh !important;
+    }
+    
+    .vungi-hero-overlay + .container {
+        min-height: 60vh !important;
+    }
+}
+
+/* Mobiles paysages et petites tablettes (576px - 767px) */
+@media (max-width: 767.98px) {
+    /* Navigation */
+    .vungi-navbar .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .vungi-navbar .nav-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    /* Topbar cachée sur mobile */
+    .vungi-topbar {
+        display: none !important;
+    }
+    
+    /* Titres plus petits */
+    h1, .display-4 {
+        font-size: 2rem !important;
+    }
+    
+    h2, .display-6 {
+        font-size: 1.75rem !important;
+    }
+    
+    h3 {
+        font-size: 1.5rem !important;
+    }
+    
+    h4 {
+        font-size: 1.25rem !important;
+    }
+    
+    /* Boutons plus petits */
+    .btn-lg {
+        font-size: 0.95rem;
+        padding: 0.5rem 1.25rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    /* Cartes avec moins de padding */
+    .vungi-card {
+        padding: 1rem !important;
+    }
+    
+    /* Hero section */
+    .hero-slide {
+        min-height: 50vh !important;
+    }
+    
+    .hero-slide h1 {
+        font-size: 1.75rem !important;
+        border-left-width: 3px !important;
+        padding-left: 10px !important;
+    }
+    
+    /* Espacement réduit */
+    .py-5 {
+        padding-top: 2.5rem !important;
+        padding-bottom: 2.5rem !important;
+    }
+    
+    .mb-5 {
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Footer ajusté */
+    .vungi-footer h4 {
+        font-size: 1.25rem;
+    }
+    
+    /* Modal plus adaptée */
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    /* Tableaux : scroll horizontal forcé */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Mobiles portrait (< 576px) */
+@media (max-width: 575.98px) {
+    /* Container avec padding réduit */
+    .container {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    /* Navigation */
+    .vungi-navbar .navbar-brand {
+        font-size: 0.9rem;
+    }
+    
+    .vungi-navbar .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    /* Titres très petits */
+    h1, .display-4 {
+        font-size: 1.5rem !important;
+    }
+    
+    h2, .display-6 {
+        font-size: 1.35rem !important;
+    }
+    
+    h3 {
+        font-size: 1.25rem !important;
+    }
+    
+    h4 {
+        font-size: 1.1rem !important;
+    }
+    
+    h5 {
+        font-size: 1rem !important;
+    }
+    
+    h6 {
+        font-size: 0.9rem !important;
+    }
+    
+    /* Texte */
+    p, .lead {
+        font-size: 0.9rem;
+    }
+    
+    .small {
+        font-size: 0.8rem;
+    }
+    
+    /* Boutons */
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    .btn-lg {
+        font-size: 0.9rem;
+        padding: 0.45rem 1rem;
+    }
+    
+    /* Cartes */
+    .vungi-card {
+        padding: 0.75rem !important;
+        margin-bottom: 1rem;
+    }
+    
+    .portal-card {
+        padding: 1.5rem 1rem !important;
+    }
+    
+    /* Hero */
+    .hero-slide {
+        min-height: 45vh !important;
+    }
+    
+    .hero-slide h1 {
+        font-size: 1.5rem !important;
+    }
+    
+    .hero-slide p.lead {
+        font-size: 0.85rem;
+    }
+    
+    /* Badge */
+    .badge {
+        font-size: 0.7rem;
+        padding: 0.3em 0.6em;
+    }
+    
+    /* Footer */
+    .vungi-footer {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    .vungi-footer h4, .vungi-footer h6 {
+        font-size: 1rem;
+    }
+    
+    /* Modal */
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Formulaire */
+    .form-control, .form-select {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    /* Espacement */
+    .py-5 {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    .px-5 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+    
+    .gap-4 {
+        gap: 1.5rem !important;
+    }
+    
+    /* Images */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+}
+
+/* Très petits écrans (< 400px) */
+@media (max-width: 399.98px) {
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1.2rem !important; }
+    h3 { font-size: 1.1rem !important; }
+    
+    .btn {
+        font-size: 0.8rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .container {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .vungi-card, .portal-card {
+        padding: 0.5rem !important;
+    }
+}
+
+/* Écrans larges (> 1200px) - Ajustements pour grands écrans */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+    
+    .display-4 {
+        font-size: 3.5rem;
+    }
+    
+    .hero-slide h1 {
+        font-size: 3rem;
+    }
+}
+
+/* Mode paysage pour mobiles */
+@media (max-height: 500px) and (orientation: landscape) {
+    .hero-slide {
+        min-height: 100vh !important;
+    }
+    
+    .vungi-hero-overlay + .container {
+        min-height: 100vh !important;
+    }
+    
+    h1 {
+        font-size: 1.75rem !important;
+    }
+}
+
+/* Impression */
+@media print {
+    .vungi-topbar,
+    .vungi-navbar,
+    .btn,
+    .modal,
+    .vungi-footer {
+        display: none !important;
+    }
+    
+    body {
+        background: white;
+        color: black;
+        font-size: 11pt;
+    }
+    
+    .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+    
+    a {
+        text-decoration: none;
+        color: black;
+    }
+}

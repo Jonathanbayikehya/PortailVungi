@@ -85,6 +85,11 @@ class Eleve(models.Model):
     date_naissance = models.DateField()
     lieu_naissance = models.CharField(max_length=100)
     classe = models.ForeignKey(Classe, on_delete=models.CASCADE)
+    telephone_parent = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True, 
+        help_text="Format: +243XXXXXXXXX")
     def __str__(self): return f"{self.nom} {self.postnom} ({self.matriculeEleve})"
 
 # 6. TYPECOURS
