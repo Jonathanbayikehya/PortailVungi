@@ -149,7 +149,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'institutvungi@gmail.com'  
 
 # REMPLACE PAR TON MOT DE PASSE D'APPLICATION DE 16 CARACTÈRES (Pas ton mot de passe normal)
-EMAIL_HOST_PASSWORD = 'wwtfypmkhtzipkjl'  
+EMAIL_HOST_PASSWORD = os.getenv('DJANGO_EMAIL_PASSWORD', 'ptowkvqpjyjqumcv')  
 
 # Nom qui s'affichera dans la boîte mail du parent
 DEFAULT_FROM_EMAIL = f"Institut Vungi <{EMAIL_HOST_USER}>"
