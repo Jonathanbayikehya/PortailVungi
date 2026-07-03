@@ -137,4 +137,21 @@ STATIC_ROOT = BASE_DIR / 'production_staticfiles'
 # Redirection d'authentification
 LOGOUT_REDIRECT_URL = 'home'
 LOGIN_URL = 'home'
-LOGIN_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = 'home'# =========================================================================
+# CONFIGURATION DE L'ENVOI D'E-MAILS (SMTP GMAIL)
+# =========================================================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+# Remplace par l'adresse Gmail officielle de l'Institut Vungi
+EMAIL_HOST_USER = 'institutvungi@gmail.com'  
+
+# REMPLACE PAR TON MOT DE PASSE D'APPLICATION DE 16 CARACTÈRES (Pas ton mot de passe normal)
+EMAIL_HOST_PASSWORD = 'wwtfypmkhtzipkjl'  
+
+# Nom qui s'affichera dans la boîte mail du parent
+DEFAULT_FROM_EMAIL = f"Institut Vungi <{EMAIL_HOST_USER}>"
+
+SITE_URL = 'https://kakulejonathan.pythonanywhere.com'

@@ -90,6 +90,11 @@ class Eleve(models.Model):
         blank=True, 
         null=True, 
         help_text="Format: +243XXXXXXXXX")
+    adresseMail = models.CharField(
+        max_length=254, 
+        blank=True, 
+        null=True, 
+        help_text="Format: xxxx@gmail.com")
     def __str__(self): return f"{self.nom} {self.postnom} ({self.matriculeEleve})"
 
 # 6. TYPECOURS
