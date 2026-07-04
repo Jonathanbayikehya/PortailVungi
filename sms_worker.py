@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vungi_portal.settings")
 
-# Sécurisation/Force de la clé d'application pour éviter l'erreur BadCredentials
+# Sécurisation et forçage de la clé d'application Gmail
 os.environ['DJANGO_EMAIL_PASSWORD'] = 'ptowkvqpjyjqumcv'
 
 import django
@@ -17,8 +17,11 @@ django.setup()
 from django.core.mail import send_mail
 from django.conf import settings
 
-# Chemin absolu vers la base de données SQLite de la file d'attente
-DB_PATH = os.path.join(BASE_DIR, "sms_queue.db")
+# Détection intelligente du chemin absolu de la base de données
+if os.path.exists('/home/kakulejonathan/PortailVungi'):
+    DB_PATH = '/home/kakulejonathan/PortailVungi/sms_queue.db'
+else:
+    DB_PATH = os.path.join(BASE_DIR, "sms_queue.db")
 
 def envoyer_email_direct(email_dest, contenu_message, sujet="Notification - Institut Vungi"):
     """
@@ -41,7 +44,7 @@ def envoyer_email_direct(email_dest, contenu_message, sujet="Notification - Inst
 
 def executer_la_file():
     """
-    Vérifie la base SQLite locale et traite les e-mails en attente.
+    Vérifie la base SQLite partagée et traite les e-mails en attente.
     """
     if not os.path.exists(DB_PATH):
         return
@@ -56,7 +59,7 @@ def executer_la_file():
         for ligne in lignes:
             id_msg, email_parent, message_corps = ligne
             
-            # Validation rapide de l'adresse e-mail
+            # Validation rapide de l'adresse e-mail reçue dans le champ 'telephone'
             if not email_parent or "@" not in str(email_parent):
                 print(f"[Worker] ID {id_msg} ignoré : '{email_parent}' n'est pas un e-mail valide.")
                 cursor.execute("UPDATE sms_queue SET statut = 'ERREUR' WHERE id = ?", (id_msg,))
@@ -85,6 +88,7 @@ if __name__ == "__main__":
     print("=========================================================")
     print("=== Worker de Notification E-mail Actif (Portail Vungi) ===")
     print("=========================================================")
+    print(f"Base de données ciblée : {DB_PATH}")
     print("En veille... En attente de notifications (Faites Ctrl+C pour quitter)")
     
     while True:
