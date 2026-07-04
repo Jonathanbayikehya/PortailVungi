@@ -3,10 +3,13 @@ import time
 import os
 import sys
 
-# Initialisation de l'environnement Django pour exploiter ses fonctions d'envoi de mail
+# 1. Configuration et initialisation de l'environnement Django
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "vungi_portal.settings")
+
+# Sécurisation/Force de la clé d'application pour éviter l'erreur BadCredentials
+os.environ['DJANGO_EMAIL_PASSWORD'] = 'ptowkvqpjyjqumcv'
 
 import django
 django.setup()
@@ -14,15 +17,15 @@ django.setup()
 from django.core.mail import send_mail
 from django.conf import settings
 
+# Chemin absolu vers la base de données SQLite de la file d'attente
 DB_PATH = os.path.join(BASE_DIR, "sms_queue.db")
 
 def envoyer_email_direct(email_dest, contenu_message, sujet="Notification - Institut Vungi"):
     """
-    Exécute l'envoi physique de l'e-mail en utilisant le serveur SMTP configuré.
+    Exécute l'envoi de l'e-mail avec le serveur SMTP configuré dans Django.
     """
     try:
         print(f"[Mail System] Expédition du courriel vers : {email_dest}")
-        
         send_mail(
             subject=sujet,
             message=contenu_message,
@@ -37,38 +40,41 @@ def envoyer_email_direct(email_dest, contenu_message, sujet="Notification - Inst
         return False
 
 def executer_la_file():
-    """Vérifie la base SQLite et traite les messages en attente."""
+    """
+    Vérifie la base SQLite locale et traite les e-mails en attente.
+    """
     if not os.path.exists(DB_PATH):
         return
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
-        # La colonne 'telephone' contient désormais la valeur du champ 'adresseMail'
+        # Récupération des messages en attente de traitement
         cursor.execute("SELECT id, telephone, message FROM sms_queue WHERE statut = 'EN_ATTENTE'")
         lignes = cursor.fetchall()
         
         for ligne in lignes:
             id_msg, email_parent, message_corps = ligne
             
-            # Validation de sécurité : s'assurer qu'un e-mail a bien été saisi
+            # Validation rapide de l'adresse e-mail
             if not email_parent or "@" not in str(email_parent):
-                print(f"[Worker] ID {id_msg} ignoré : '{email_parent}' n'est pas une adresse e-mail valide.")
+                print(f"[Worker] ID {id_msg} ignoré : '{email_parent}' n'est pas un e-mail valide.")
                 cursor.execute("UPDATE sms_queue SET statut = 'ERREUR' WHERE id = ?", (id_msg,))
                 conn.commit()
                 continue
                 
             print(f"\n[Worker] Prise en charge de la notification ID {id_msg}...")
             
-            # Envoi par courriel
-            succès = envoyer_email_direct(email_parent, message_corps)
+            # Tentative d'envoi
+            succes = envoyer_email_direct(email_parent, message_corps)
             
-            allocation_statut = 'ENVOYE' if succès else 'ERREUR'
+            # Mise à jour du statut selon le résultat de l'envoi
+            allocation_statut = 'ENVOYE' if succes else 'ERREUR'
             cursor.execute("UPDATE sms_queue SET statut = ? WHERE id = ?", (allocation_statut, id_msg))
             conn.commit()
             
             print(f"[Worker] Fin de traitement ID {id_msg} avec statut : {allocation_statut}")
-            time.sleep(2)  # Temporisation légère pour respecter les quotas d'envoi du serveur SMTP
+            time.sleep(2)  # Pause de sécurité pour respecter les quotas d'envoi
             
     except sqlite3.OperationalError as e:
         print(f"[Erreur Base SQLite] : {e}")
@@ -76,8 +82,11 @@ def executer_la_file():
         conn.close()
 
 if __name__ == "__main__":
-    print("=== Worker de Notification E-mail Démarré (Portail Vungi) ===")
-    print("En veille, en attente de flux depuis Django... (Faites Ctrl+C pour quitter)")
+    print("=========================================================")
+    print("=== Worker de Notification E-mail Actif (Portail Vungi) ===")
+    print("=========================================================")
+    print("En veille... En attente de notifications (Faites Ctrl+C pour quitter)")
+    
     while True:
         executer_la_file()
         time.sleep(5)
