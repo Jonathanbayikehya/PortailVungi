@@ -18,8 +18,8 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 # Détection intelligente du chemin absolu de la base de données
-if os.path.exists('/home/kakulejonathan/PortailVungi'):
-    DB_PATH = '/home/kakulejonathan/PortailVungi/sms_queue.db'
+if os.path.exists('/home/institutvungi/PortailVungi'):
+    DB_PATH = '/home/institutvungi/PortailVungi/sms_queue.db'
 else:
     DB_PATH = os.path.join(BASE_DIR, "sms_queue.db")
 

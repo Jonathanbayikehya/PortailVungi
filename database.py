@@ -2,9 +2,8 @@ import sqlite3
 import os
 
 # Détection intelligente du chemin absolu pour le serveur en ligne et le PC local
-if os.path.exists('/home/kakulejonathan/PortailVungi'):
-    # Chemin absolu fixe sur PythonAnywhere
-    DB_PATH = '/home/kakulejonathan/PortailVungi/sms_queue.db'
+if os.path.exists('/home/institutvungi/PortailVungi'):
+    DB_PATH = '/home/institutvungi/PortailVungi/sms_queue.db'
 else:
     # Chemin dynamique pour le PC local Windows (remonte d'un niveau si le fichier est dans un sous-dossier)
     CORPS_DIR = os.path.dirname(os.path.abspath(__file__))
