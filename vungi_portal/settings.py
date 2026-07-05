@@ -155,3 +155,7 @@ EMAIL_HOST_PASSWORD = os.getenv('DJANGO_EMAIL_PASSWORD', 'ptowkvqpjyjqumcv')
 DEFAULT_FROM_EMAIL = f"Institut Vungi <{EMAIL_HOST_USER}>"
 
 SITE_URL = 'https://kakulejonathan.pythonanywhere.com'
+
+# Configuration des fichiers médias (images des annonces, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

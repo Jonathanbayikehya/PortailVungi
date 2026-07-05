@@ -315,3 +315,20 @@ class DecisionJury(models.Model):
 
     def __str__(self):
         return f"{self.eleve} — {self.get_decision_display()}"
+
+    from django.db import models
+
+class Annonce(models.Model):
+    titre = models.CharField(max_length=200, verbose_name="Titre de l'annonce")
+    contenu = models.TextField(verbose_name="Contenu / Message")
+    photo = models.ImageField(upload_to='annonces/', blank=True, null=True, verbose_name="Photo d'illustration")
+    date_publication = models.DateTimeField(auto_now_add=True, verbose_name="Date de publication")
+    est_active = models.BooleanField(default=True, verbose_name="Afficher sur le site")
+
+    class Meta:
+        ordering = ['-date_publication'] # Les plus récentes apparaissent en premier
+        verbose_name = "Annonce"
+        verbose_name_plural = "Anonces"
+
+    def __str__(self):
+        return self.titre

@@ -103,6 +103,51 @@
     </div>
 </section>
 
+<section id="actualites" class="py-5 bg-white">
+    <div class="container">
+        <h2 class="text-center fw-bold text-uac mb-5">📢 Actualités & Annonces</h2>
+        <div class="row g-4">
+            
+            {% for annonce in annonces %}
+                <div class="col-md-4">
+                    <div class="vungi-card overflow-hidden h-100 shadow-sm d-flex flex-column">
+                        <div class="bg-uac text-white p-3 d-flex justify-content-between align-items-center">
+                            <span class="badge bg-warning text-dark fw-bold">Info</span>
+                            <small class="opacity-75"><i class="fas fa-calendar-alt me-1"></i> {{ annonce.date_publication|date:"d/m/Y" }}</small>
+                        </div>
+                        
+                        {% if annonce.photo %}
+                            <div style="height: 220px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                <img src="{{ annonce.photo.url }}" class="img-fluid" alt="{{ annonce.titre }}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+                            </div>
+                        {% else %}
+                            <div class="bg-secondary text-white text-center d-flex flex-column justify-content-center align-items-center" style="height: 220px;">
+                                <i class="fas fa-bullhorn fa-3x mb-2 opacity-50"></i>
+                                <small class="opacity-75">Institut Vungi</small>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="p-4 flex-grow-1">
+                            <h5 class="fw-bold text-uac mb-2">{{ annonce.titre }}</h5>
+                            <p class="small text-muted" style="text-align: justify;">
+                                {{ annonce.contenu|linebreaksbr }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-muted">
+                        <i class="fas fa-folder-open fa-3x mb-3 text-secondary"></i>
+                        <p class="mb-0">Aucune annonce ou actualité publiée pour le moment.</p>
+                    </div>
+                </div>
+            {% endfor %}
+
+        </div>
+    </div>
+</section>
+
 <section id="institut" class="section-institut py-5">
     <div class="container py-4">
         <div class="text-center mb-5">
@@ -163,41 +208,6 @@
                     <i class="fas fa-book fa-2x text-uac mb-2"></i>
                     <h6 class="fw-bold text-uac">Sections</h6>
                     <p class="small text-muted mb-0">Cycle d'orientation · Scientifique · Pédagogie · Électricité · Commerciale & Gestion</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section id="actualites" class="py-5 bg-white">
-    <div class="container">
-        <h2 class="text-center fw-bold text-uac mb-5">Actualités</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="vungi-card overflow-hidden h-100">
-                    <div class="bg-uac text-white p-3"><span class="badge badge-gold">Pédagogie</span></div>
-                    <div class="p-4">
-                        <h5 class="fw-bold text-uac">Publication des résultats</h5>
-                        <p class="small text-muted">Les résultats sont publiés par le proviseur. Consultez votre espace élève après autorisation officielle.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="vungi-card overflow-hidden h-100">
-                    <div class="bg-uac text-white p-3"><span class="badge badge-gold">Finances</span></div>
-                    <div class="p-4">
-                        <h5 class="fw-bold text-uac">Frais scolaires 2025-2026</h5>
-                        <p class="small text-muted">Le déblocage progressif des notes est lié au paiement : 25%, 33%, 50% et 100% du montant dû.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="vungi-card overflow-hidden h-100">
-                    <div class="bg-uac text-white p-3"><span class="badge badge-gold">Vie scolaire</span></div>
-                    <div class="p-4">
-                        <h5 class="fw-bold text-uac">Année scolaire 2025-2026</h5>
-                        <p class="small text-muted">Bienvenue sur le portail numérique officiel de l'Institut Vungi à Butembo.</p>
-                    </div>
                 </div>
             </div>
         </div>

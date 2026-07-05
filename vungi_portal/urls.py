@@ -24,5 +24,4 @@ urlpatterns = [
     path('', include('management.urls')), # Permet de lier toutes les routes du sous-dossier management
 ]
 if settings.DEBUG:
-    # On force Django à servir les fichiers depuis le dossier 'staticfiles' en local
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT, show_indexes=True)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

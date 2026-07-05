@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import TemplateDoesNotExist
 from django.utils import timezone
 
+
 from .decorators import (
     comptable_required,
     eleve_required,
@@ -29,6 +30,7 @@ from .models import (
     Paiement,
     Periode,
     PublicationResultats,
+    Annonce,
 )
 from .utils import (
     build_deliberation_classe,
@@ -151,8 +153,14 @@ def home(request):
             messages.error(request, "Matricule ou mot de passe incorrect.")
             return redirect("home")
 
-    return render(request, "management/home.html")
-
+    # On récupère les 5 dernières annonces actives sans perturber le POST ci-dessus
+    annonces = Annonce.objects.filter(est_active=True).order_by('-date_publication')[:5]
+    
+    context = {
+        'annonces': annonces,  # <-- Ce mot doit être écrit exactement comme ça, au pluriel
+    }
+    return render(request, "management/home.html", context)
+    
 
 def deconnexion_utilisateur(request):
     logout(request)
@@ -1243,3 +1251,4 @@ def imprimer_bulletins(request, classe_id):
             continue
 
     return render(request, "bulletins/bulletin_co.html", context)
+

@@ -75,6 +75,15 @@ class DomaineAdmin(admin.ModelAdmin):
     list_display = ('nom', 'ordre')
     ordering = ('ordre',)
 
+from django.contrib import admin
+from .models import Annonce
+
+@admin.register(Annonce)
+class AnnonceAdmin(admin.ModelAdmin):
+    list_display = ('titre', 'date_publication', 'est_active')
+    list_filter = ('est_active', 'date_publication')
+    search_fields = ('titre', 'contenu')
+
 
 # --- ENREGISTREMENT SIMPLE DES AUTRES TABLES ---
 admin.site.register(Section)
