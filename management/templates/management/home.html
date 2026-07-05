@@ -127,11 +127,20 @@
                             </div>
                         {% endif %}
                         
-                        <div class="p-4 flex-grow-1">
+                        <div class="p-4 flex-grow-1 d-flex flex-column">
                             <h5 class="fw-bold text-uac mb-2">{{ annonce.titre }}</h5>
-                            <p class="small text-muted" style="text-align: justify;">
-                                {{ annonce.contenu|linebreaksbr }}
-                            </p>
+                            
+                            <div class="small text-muted flex-grow-1" style="text-align: justify;">
+                                <span class="texte-apercu">{{ annonce.contenu|truncatewords:20 }}</span>
+                                
+                                <span class="texte-complet d-none">{{ annonce.contenu|linebreaksbr }}</span>
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="btn btn-link btn-sm p-0 text-warning fw-bold text-decoration-none btn-lire-plus" onclick="toggleAnnonce(this)">
+                                    Lire plus <i class="fas fa-chevron-down ms-1 small"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -147,6 +156,26 @@
         </div>
     </div>
 </section>
+
+<script>
+function toggleAnnonce(bouton) {
+    // On récupère la zone de texte parente du bouton
+    const conteneur = bouton.closest('.card-body, .flex-grow-1');
+    const apercu = conteneur.querySelector('.texte-apercu');
+    const complet = conteneur.querySelector('.texte-complet');
+    
+    // Bascule des classes Bootstrap 'd-none' (masqué)
+    if (complet.classList.contains('d-none')) {
+        complet.classList.remove('d-none');
+        apercu.classAdd('d-none'); // Cache l'aperçu coupé
+        bouton.innerHTML = 'Moins lire <i class="fas fa-chevron-up ms-1 small"></i>';
+    } else {
+        complet.classList.add('d-none');
+        apercu.classList.remove('d-none'); // Réaffiche l'aperçu
+        bouton.innerHTML = 'Lire plus <i class="fas fa-chevron-down ms-1 small"></i>';
+    }
+}
+</script>
 
 <section id="institut" class="section-institut py-5">
     <div class="container py-4">
