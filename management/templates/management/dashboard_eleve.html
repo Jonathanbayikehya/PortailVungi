@@ -126,21 +126,19 @@
 </nav>
 
 <main class="main-content">
-    <div class="tab-content" id="v-pills-tabContent">
-        
-        <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+    <div class="tab-content" id="v-pills-tabContent"> 
+        <div id="bloc-bienvenue" class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
             <div class="portal-card text-center d-flex flex-column align-items-center justify-content-center">
                 <div class="mb-4">
                     <img src="{% static 'management/logovungi.png' %}" 
                         alt="Logo Institut Vungi" 
                         class="rounded-circle logo-anime" 
                         style="width: 200px; height: 200px; object-fit: cover; border: 5px solid var(--uac-gold); background-color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                    <h2 class="fw-bold text-uac mb-2">BIENVENUE SUR VOTRE PORTAIL</h2>
+                    <p class="text-muted fs-5 mb-3">{{ eleve.prenom }} {{ eleve.nom }} {{ eleve.postnom }}</p>
+                    <hr class="w-25 mb-3" style="border-top: 3px solid var(--uac-gold); margin: 0 auto;">
+                    <p class="small text-uppercase fw-bold text-primary mb-0">Session de suivi académique 2025-2026</p>
                 </div>
-
-                <h2 class="fw-bold text-uac mb-2">BIENVENUE SUR VOTRE PORTAIL</h2>
-                <p class="text-muted fs-5 mb-3">{{ eleve.prenom }} {{ eleve.nom }} {{ eleve.postnom }}</p>
-                <hr class="w-25 mb-3" style="border-top: 3px solid var(--uac-gold); margin: 0 auto;">
-                <p class="small text-uppercase fw-bold text-primary mb-0">Session de suivi académique 2025-2026</p>
             </div>
         </div>
 
@@ -151,20 +149,31 @@
             }
 
             @keyframes pulseLogo {
-                0% {
-                    transform: scale(1);
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-                }
-                50% {
-                    transform: scale(1.05); /* Grossit légèrement */
-                    box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4); /* Lueur dorée */
-                }
-                100% {
-                    transform: scale(1);
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-                }
+                0% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+                50% { transform: scale(1.05); box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4); }
+                100% { transform: scale(1); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
             }
         </style>
+
+        <script>
+            document.querySelectorAll('.sidebar-link, .nav-link, [data-bs-toggle="tab"]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    // On récupère la cible du clic (soit via href, soit via data-bs-target)
+                    let targetHref = this.getAttribute('href') || this.getAttribute('data-bs-target');
+                    let blocBienvenue = document.getElementById('bloc-bloc-bienvenue') || document.getElementById('bloc-bienvenue');
+                    
+                    if (blocBienvenue) {
+                        // Si on clique sur Accueil (adapte "#accueil" ou "#home" selon ton ID exact de l'onglet accueil)
+                        if (targetHref === "#accueil" || targetHref === "#home" || targetHref === "") {
+                            blocBienvenue.style.setProperty('display', 'flex', 'important');
+                        } else {
+                            // Si on clique sur n'importe quel autre menu, on le cache
+                            blocBienvenue.style.setProperty('display', 'none', 'important');
+                        }
+                    }
+                });
+            });
+        </script>
 
         <!-- ========================================== -->
         <!-- ONGLETS : PROFIL PERSONNEL                 -->
