@@ -6,7 +6,8 @@
     <title>Espace Élève | Institut Vungi</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    {% load static %}
+
     <style>
         :root {
             --uac-blue: #003366;
@@ -127,17 +128,43 @@
 <main class="main-content">
     <div class="tab-content" id="v-pills-tabContent">
         
-        <!-- ========================================== -->
-        <!-- ONGLETS : ACCUEIL                          -->
-        <!-- ========================================== -->
-        <div class="tab-pane fade show active" id="pane-accueil" role="tabpanel">
-            <div class="portal-card text-center">
-                <h2 class="fw-bold text-uac">BIENVENUE SUR VOTRE PORTAIL</h2>
-                <p class="text-muted fs-5">{{ eleve.prenom }} {{ eleve.nom }} {{ eleve.postnom }}</p>
-                <hr class="mx-auto w-25" style="border-top: 3px solid var(--uac-gold);">
-                <p class="small text-uppercase fw-bold text-primary">Session de suivi académique 2025-2026</p>
+        <div class="d-flex align-items-center justify-content-center" style="min-height: 70vh;">
+            <div class="portal-card text-center d-flex flex-column align-items-center justify-content-center">
+                <div class="mb-4">
+                    <img src="{% static 'management/logovungi.png' %}" 
+                        alt="Logo Institut Vungi" 
+                        class="rounded-circle logo-anime" 
+                        style="width: 200px; height: 200px; object-fit: cover; border: 5px solid var(--uac-gold); background-color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                </div>
+
+                <h2 class="fw-bold text-uac mb-2">BIENVENUE SUR VOTRE PORTAIL</h2>
+                <p class="text-muted fs-5 mb-3">{{ eleve.prenom }} {{ eleve.nom }} {{ eleve.postnom }}</p>
+                <hr class="w-25 mb-3" style="border-top: 3px solid var(--uac-gold); margin: 0 auto;">
+                <p class="small text-uppercase fw-bold text-primary mb-0">Session de suivi académique 2025-2026</p>
             </div>
         </div>
+
+        <style>
+            /* Effet de battement doux (Pulse) */
+            .logo-anime {
+                animation: pulseLogo 3s infinite ease-in-out;
+            }
+
+            @keyframes pulseLogo {
+                0% {
+                    transform: scale(1);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                }
+                50% {
+                    transform: scale(1.05); /* Grossit légèrement */
+                    box-shadow: 0 6px 15px rgba(255, 204, 0, 0.4); /* Lueur dorée */
+                }
+                100% {
+                    transform: scale(1);
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+                }
+            }
+        </style>
 
         <!-- ========================================== -->
         <!-- ONGLETS : PROFIL PERSONNEL                 -->
@@ -163,6 +190,7 @@
                         <label class="text-muted small fw-bold">GENRE</label>
                         <p class="fs-5 border-bottom pb-1">{{ eleve.sexe }}</p>
                     </div>
+                    
                 </div>
             </div>
         </div>
